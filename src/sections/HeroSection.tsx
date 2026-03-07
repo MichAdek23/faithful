@@ -81,11 +81,22 @@ export const HeroSection = () => {
             </ul>
 
             <div className="flex items-center gap-2 sm:gap-3">
-              <Button className="hidden sm:flex rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-                <MessageCircle className="w-4 h-4" /> Chat us
+              <Button
+                as="a"
+                href="https://wa.me/447473052794"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden sm:flex rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                <MessageCircle className="w-4 h-4 mr-1" /> Chat us
               </Button>
-              <Button className="hidden sm:flex rounded-full bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600">
-                <Phone className="w-4 h-4" /> Call
+
+              <Button
+                as="a"
+                href="tel:07473052794"
+                className="hidden sm:flex rounded-full bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
+              >
+                <Phone className="w-4 h-4 mr-1" /> Call
               </Button>
 
               <Button
@@ -153,10 +164,21 @@ export const HeroSection = () => {
                   My Bookings
                 </li>
                 <li className="px-6 py-4 space-y-3">
-                  <Button className="w-full rounded-full bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700">
+                  <Button
+                    as="a"
+                    href="https://wa.me/447473052794"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full rounded-full bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700"
+                  >
                     <MessageCircle className="w-4 h-4 mr-2" /> Chat with us
                   </Button>
-                  <Button className="w-full rounded-full bg-blue-500 px-4 py-3 text-sm font-medium text-white hover:bg-blue-600">
+
+                  <Button
+                    as="a"
+                    href="tel:07473052794"
+                    className="w-full rounded-full bg-blue-500 px-4 py-3 text-sm font-medium text-white hover:bg-blue-600"
+                  >
                     <Phone className="w-4 h-4 mr-2" /> Call us
                   </Button>
                 </li>
