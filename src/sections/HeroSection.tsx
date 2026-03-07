@@ -37,7 +37,7 @@ export const HeroSection = () => {
                 Faithful Auto Care
               </span>
               <span className="text-xs sm:text-lg text-blue-900 font-semibold uppercase tracking-wide sm:hidden">
-                Faithful
+                Faithful Auto Care
               </span>
             </div>
 
