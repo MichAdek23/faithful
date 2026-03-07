@@ -1,4 +1,4 @@
-import { CheckCircle2, Calendar, Clock, Sparkles, Car, User, Phone } from 'lucide-react';
+import { CircleCheck as CheckCircle2, Calendar, Clock, Sparkles, Car, User, Phone } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useNavigate } from 'react-router-dom';
 
