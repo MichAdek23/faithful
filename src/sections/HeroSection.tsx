@@ -29,7 +29,7 @@ export const HeroSection = () => {
           <div className="flex h-16 sm:h-14 items-center justify-between rounded-full bg-[#D6EAF84D] backdrop-blur-md px-4 sm:px-6 shadow-lg">
             <div className="flex items-center gap-2 sm:gap-3">
               <img
-                src="./utilities/Images/LogoBlackie.png"
+                src="/LogoBlackie.png"
                 alt="Faithful Auto Care Logo"
                 className="h-8 sm:h-10 w-auto"
               />
@@ -171,7 +171,7 @@ export const HeroSection = () => {
         className="relative flex min-h-screen w-full items-center overflow-hidden"
       >
         <img
-          src="./utilities/Images/LandingPage1.png"
+          src="/LandingPage1.png"
           alt="Car wash background"
           className="absolute inset-0 w-full h-full object-cover"
         />
