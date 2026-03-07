@@ -12,7 +12,7 @@ export const FooterSection = () => {
   },
   {
     icon: Mail,
-    text: "faithfulautocare@gmail.com",
+    text: "faithfulautocare00@gmail.com",
     href: "mailto:faithfulautocare@gmail.com",
   },
 ];
