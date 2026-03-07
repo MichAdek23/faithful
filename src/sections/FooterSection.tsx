@@ -25,13 +25,13 @@ export const FooterSection = () => {
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 mb-8 sm:mb-12">
           <div className="flex flex-col gap-6 sm:gap-8">
-            <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <img
                 src="/logo.png"
                 alt="Faithful Auto Care Logo"
-                className="w-auto h-auto max-w-[120px] sm:max-w-[150px] md:max-w-[180px] object-contain"
+                className="w-auto h-auto max-w-[80px] sm:max-w-[150px] md:max-w-[180px] object-contain"
               />
-              <h2 className="font-poppins font-bold text-white text-lg sm:text-2xl md:text-3xl">
+              <h2 className="font-poppins font-bold text-white text-base sm:text-2xl md:text-3xl">
                 FAITHFUL AUTO CARE
               </h2>
             </div>

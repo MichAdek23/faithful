@@ -83,27 +83,20 @@ export const HeroSection = () => {
             <div className="flex items-center gap-2 sm:gap-3">
               <Button
                 onClick={() => window.open('https://wa.me/447473052794', '_blank')}
-                className="hidden sm:flex rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                className="hidden lg:flex rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
               >
                 <MessageCircle className="w-4 h-4 mr-1" /> Chat us
               </Button>
 
               <Button
                 onClick={() => window.location.href = 'tel:07473052794'}
-                className="hidden sm:flex rounded-full bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
+                className="hidden lg:flex rounded-full bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
               >
                 <Phone className="w-4 h-4 mr-1" /> Call
               </Button>
 
               <Button
-                className="sm:hidden rounded-full bg-blue-600 p-2 text-white hover:bg-blue-700"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              >
-                {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </Button>
-
-              <Button
-                className="hidden lg:hidden md:flex rounded-full bg-blue-600 p-2 text-white hover:bg-blue-700"
+                className="lg:hidden rounded-full bg-blue-600 p-2 text-white hover:bg-blue-700"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
                 {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}

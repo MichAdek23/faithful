@@ -72,7 +72,7 @@ export function TimeStep({ selectedTime, selectedDate, onTimeSelect, onNext, onB
         <h3 className="text-xl font-semibold text-gray-900">Select Time</h3>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {timeSlots.map((time) => {
           const booked = isTimeBooked(time);
           const selected = localSelectedTime === time;
