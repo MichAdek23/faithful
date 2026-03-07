@@ -188,7 +188,7 @@ Deno.serve(async (req: Request) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Faithful Auto Care <onboarding@resend.dev>",
+        from: "Faithful Auto Care <noreply@faithfulautocare.uk>",
         to: [customer_email],
         subject: `Booking Confirmation - ${service_type} - ${new Date(booking_date).toLocaleDateString()}`,
         html: emailHtml,
@@ -357,7 +357,7 @@ Deno.serve(async (req: Request) => {
           Authorization: `Bearer ${RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: "Faithful Auto Care <onboarding@resend.dev>",
+          from: "Faithful Auto Care <noreply@faithfulautocare.uk>",
           to: adminEmails,
           subject: `New Booking: ${service_type} - ${new Date(booking_date).toLocaleDateString()} at ${booking_time}`,
           html: adminEmailHtml,
