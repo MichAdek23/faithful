@@ -82,18 +82,14 @@ export const HeroSection = () => {
 
             <div className="flex items-center gap-2 sm:gap-3">
               <Button
-                as="a"
-                href="https://wa.me/447473052794"
-                target="_blank"
-                rel="noopener noreferrer"
+                onClick={() => window.open('https://wa.me/447473052794', '_blank')}
                 className="hidden sm:flex rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
               >
                 <MessageCircle className="w-4 h-4 mr-1" /> Chat us
               </Button>
 
               <Button
-                as="a"
-                href="tel:07473052794"
+                onClick={() => window.location.href = 'tel:07473052794'}
                 className="hidden sm:flex rounded-full bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
               >
                 <Phone className="w-4 h-4 mr-1" /> Call
@@ -165,18 +161,20 @@ export const HeroSection = () => {
                 </li>
                 <li className="px-6 py-4 space-y-3">
                   <Button
-                    as="a"
-                    href="https://wa.me/447473052794"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    onClick={() => {
+                      window.open('https://wa.me/447473052794', '_blank');
+                      setIsMobileMenuOpen(false);
+                    }}
                     className="w-full rounded-full bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700"
                   >
                     <MessageCircle className="w-4 h-4 mr-2" /> Chat with us
                   </Button>
 
                   <Button
-                    as="a"
-                    href="tel:07473052794"
+                    onClick={() => {
+                      window.location.href = 'tel:07473052794';
+                      setIsMobileMenuOpen(false);
+                    }}
                     className="w-full rounded-full bg-blue-500 px-4 py-3 text-sm font-medium text-white hover:bg-blue-600"
                   >
                     <Phone className="w-4 h-4 mr-2" /> Call us
