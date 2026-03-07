@@ -7,8 +7,8 @@ export const FooterSection = () => {
   const contactInfo = [
   {
     icon: Phone,
-    text: "0747 350 2794",
-    href: "tel:07473502794",
+    text: "0747 305 2794",
+    href: "tel:07473052794",
   },
   {
     icon: Mail,
