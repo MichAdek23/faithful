@@ -31,8 +31,14 @@ export function BookingPage() {
     setBookingData(prev => ({ ...prev, ...data }));
   };
 
-  const nextStep = () => setCurrentStep(prev => prev + 1);
-  const prevStep = () => setCurrentStep(prev => prev - 1);
+  const nextStep = () => {
+    setCurrentStep(prev => prev + 1);
+    window.scrollTo(0, 0);
+  };
+  const prevStep = () => {
+    setCurrentStep(prev => prev - 1);
+    window.scrollTo(0, 0);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
