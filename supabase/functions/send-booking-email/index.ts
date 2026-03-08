@@ -12,6 +12,10 @@ interface BookingData {
   customer_name: string;
   customer_email: string;
   customer_phone: string;
+  house_number: string;
+  street_name: string;
+  post_code: string;
+  city: string;
   booking_date: string;
   booking_time: string;
   service_type: string;
@@ -35,12 +39,18 @@ Deno.serve(async (req: Request) => {
       customer_name,
       customer_email,
       customer_phone,
+      house_number,
+      street_name,
+      post_code,
+      city,
       booking_date,
       booking_time,
       service_type,
       service_price,
       vehicle_type,
     } = bookingData;
+
+    const fullAddress = `${house_number} ${street_name}, ${city}, ${post_code}`;
 
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -147,6 +157,10 @@ Deno.serve(async (req: Request) => {
                   <span class="detail-label">Time:</span>
                   <span class="detail-value">${booking_time}</span>
                 </div>
+                <div class="detail-row">
+                  <span class="detail-label">Address:</span>
+                  <span class="detail-value">${fullAddress}</span>
+                </div>
                 <div class="detail-row" style="border-bottom: none;">
                   <span class="detail-label">Total Price:</span>
                   <span class="price">£${service_price}</span>
@@ -155,7 +169,7 @@ Deno.serve(async (req: Request) => {
 
               <p><strong>What to expect:</strong></p>
               <ul>
-                <li>Our professional team will take care of your vehicle</li>
+                <li>Our professional team will visit you at the address above</li>
                 <li>Average service duration is 30-45 minutes</li>
                 <li>Payment can be made after the service</li>
               </ul>
@@ -302,6 +316,10 @@ Deno.serve(async (req: Request) => {
                   <div class="detail-row">
                     <span class="detail-label">Customer Phone:</span>
                     <span class="detail-value">${customer_phone}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Address:</span>
+                    <span class="detail-value">${fullAddress}</span>
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">Service:</span>

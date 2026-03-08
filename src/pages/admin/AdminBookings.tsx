@@ -17,6 +17,10 @@ interface Booking {
   vehicle_type: string;
   service_price: number;
   status: string;
+  house_number: string;
+  street_name: string;
+  post_code: string;
+  city: string;
 }
 
 export const AdminBookings = () => {
@@ -123,6 +127,9 @@ export const AdminBookings = () => {
                     Vehicle
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Address
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Price
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
@@ -156,6 +163,12 @@ export const AdminBookings = () => {
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                       {booking.vehicle_type}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm">
+                        <p className="text-gray-900">{booking.house_number} {booking.street_name}</p>
+                        <p className="text-gray-500">{booking.city} {booking.post_code}</p>
+                      </div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
                       £{booking.service_price}
