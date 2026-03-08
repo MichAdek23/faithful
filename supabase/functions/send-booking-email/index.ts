@@ -155,7 +155,6 @@ Deno.serve(async (req: Request) => {
 
               <p><strong>What to expect:</strong></p>
               <ul>
-                <li>Please arrive 5 minutes before your scheduled time</li>
                 <li>Our professional team will take care of your vehicle</li>
                 <li>Average service duration is 30-45 minutes</li>
                 <li>Payment can be made after the service</li>

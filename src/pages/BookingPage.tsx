@@ -15,6 +15,11 @@ interface BookingData {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  // Address fields
+  houseNumber: string;
+  streetName: string;
+  postCode: string;
+  city: string;
 }
 
 export function BookingPage() {
@@ -92,6 +97,11 @@ export function BookingPage() {
               customerName={bookingData.customerName}
               customerEmail={bookingData.customerEmail}
               customerPhone={bookingData.customerPhone}
+              // Pass address props
+              houseNumber={bookingData.houseNumber}
+              streetName={bookingData.streetName}
+              postCode={bookingData.postCode}
+              city={bookingData.city}
               onDetailsChange={updateBookingData}
               onNext={(id) => {
                 setBookingId(id);
