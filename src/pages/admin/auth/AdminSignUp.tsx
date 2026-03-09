@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Eye, EyeOff, Lock, Mail, User, AlertCircle } from 'lucide-react';
+import { useSEO } from '@/hooks/useSEO';
 
 export default function AdminSignUp() {
+  useSEO({ title: "Admin Sign Up", description: "Admin sign up", noIndex: true });
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: '',

@@ -5,6 +5,7 @@ import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
+import { useSEO } from '../hooks/useSEO';
 
 interface Booking {
   id: string;
@@ -22,6 +23,15 @@ interface Booking {
 }
 
 export default function ViewBookingsPage() {
+  useSEO({
+    title: "View My Bookings",
+    description:
+      "Check the status of your car wash and detailing bookings with Faithful Auto Care. Look up your appointments using your email address.",
+    canonical: "/view-bookings",
+    keywords:
+      "view car wash booking, check booking status, my appointments, Faithful Auto Care bookings",
+  });
+
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [bookings, setBookings] = useState<Booking[]>([]);

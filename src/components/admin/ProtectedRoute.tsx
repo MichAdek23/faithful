@@ -1,8 +1,15 @@
 import { Navigate } from 'react-router-dom';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { useSEO } from '@/hooks/useSEO';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, adminData, loading } = useAdminAuth();
+
+  useSEO({
+    title: "Admin",
+    description: "Admin panel",
+    noIndex: true,
+  });
 
   if (loading) {
     return (

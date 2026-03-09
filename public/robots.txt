@@ -1,4 +1,14 @@
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /admin
+
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
 
 Sitemap: https://faithfulautocare.uk/sitemap.xml

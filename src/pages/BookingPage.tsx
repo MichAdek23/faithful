@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSEO } from '../hooks/useSEO';
 import { DateStep } from '../components/booking/DateStep';
 import { TimeStep } from '../components/booking/TimeStep';
 import { ServiceStep } from '../components/booking/ServiceStep';
@@ -23,6 +24,15 @@ interface BookingData {
 }
 
 export function BookingPage() {
+  useSEO({
+    title: "Book Your Car Wash",
+    description:
+      "Schedule your professional mobile car wash and detailing service with Faithful Auto Care. Choose from Basic Refresh, Premium, or Ultimate packages. We come to your location across the UK.",
+    canonical: "/book-now",
+    keywords:
+      "book car wash, schedule car detailing, mobile car wash booking, car valet appointment, Faithful Auto Care booking",
+  });
+
   const [currentStep, setCurrentStep] = useState(1);
   const [bookingData, setBookingData] = useState<Partial<BookingData>>({});
   const [bookingId, setBookingId] = useState<string>('');

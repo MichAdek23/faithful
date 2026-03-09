@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Mail, ArrowLeft } from 'lucide-react';
+import { useSEO } from '@/hooks/useSEO';
 
 export default function AdminForgotPassword() {
+  useSEO({ title: "Admin Forgot Password", description: "Admin forgot password", noIndex: true });
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

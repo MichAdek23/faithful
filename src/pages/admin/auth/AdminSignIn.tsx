@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { useSEO } from '@/hooks/useSEO';
 
 export default function AdminSignIn() {
+  useSEO({ title: "Admin Sign In", description: "Admin sign in", noIndex: true });
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

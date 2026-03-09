@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Eye, EyeOff, Lock } from 'lucide-react';
+import { useSEO } from '@/hooks/useSEO';
 
 export default function AdminResetPassword() {
+  useSEO({ title: "Admin Reset Password", description: "Admin reset password", noIndex: true });
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

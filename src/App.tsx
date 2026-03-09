@@ -1,5 +1,6 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { useSEO } from "./hooks/useSEO";
 import { HeroSection } from "./sections/HeroSection";
 import { FeaturesSection } from "./sections/FeaturesSection";
 import { AboutSection } from "./sections/AboutSection";
@@ -31,6 +32,15 @@ import { AdminAuthProvider } from "./contexts/AdminAuthContext";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 
 function HomePage() {
+  useSEO({
+    title: "Faithful Auto Care - Professional Mobile Car Wash & Detailing in the UK",
+    description:
+      "Faithful Auto Care offers premium mobile car wash and detailing services across the UK. We come to you with professional exterior wash, interior valet, and full detailing packages. Book online today.",
+    canonical: "/",
+    keywords:
+      "mobile car wash, car detailing, car valet, professional car wash, exterior wash, interior valet, car cleaning service, mobile detailing, UK car wash, Faithful Auto Care",
+  });
+
   return (
     <div className="min-h-screen">
       <HeroSection />
