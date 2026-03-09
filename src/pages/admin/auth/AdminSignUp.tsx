@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Eye, EyeOff, Lock, Mail, User, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, User, CircleAlert as AlertCircle } from 'lucide-react';
 import { useSEO } from '@/hooks/useSEO';
 
 export default function AdminSignUp() {
