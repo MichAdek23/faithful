@@ -177,8 +177,8 @@ Deno.serve(async (req: Request) => {
               <p>If you need to reschedule or cancel, please contact us at least 24 hours in advance.</p>
 
               <p><strong>Contact Information:</strong><br>
-              Phone: +447473052794<br>
-              Email: info@faithfulautocare.com</p>
+              Phone: 07473052794<br>
+              Email: faithfulautocare00@gmail.com</p>
 
               <p>We look forward to serving you!</p>
 
@@ -416,4 +416,3 @@ Deno.serve(async (req: Request) => {
       }
     );
   }
-});
