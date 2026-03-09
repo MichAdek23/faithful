@@ -177,7 +177,7 @@ Deno.serve(async (req: Request) => {
               <p>If you need to reschedule or cancel, please contact us at least 24 hours in advance.</p>
 
               <p><strong>Contact Information:</strong><br>
-              Phone: +44 7700 900000<br>
+              Phone: +447473052794<br>
               Email: info@faithfulautocare.com</p>
 
               <p>We look forward to serving you!</p>
