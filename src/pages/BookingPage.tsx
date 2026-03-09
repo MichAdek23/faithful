@@ -6,6 +6,7 @@ import { ServiceStep } from '../components/booking/ServiceStep';
 import { DetailsStep } from '../components/booking/DetailsStep';
 import { ConfirmationStep } from '../components/booking/ConfirmationStep';
 import { FooterSection } from '../sections/FooterSection';
+import { AdBanner } from '../components/AdBanner';
 
 interface BookingData {
   date: string;
@@ -135,6 +136,8 @@ export function BookingPage() {
             />
           )}
         </div>
+
+        <AdBanner className="mt-6" />
       </div>
 
       <FooterSection />

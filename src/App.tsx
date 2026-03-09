@@ -30,6 +30,7 @@ import AdminForgotPassword from "./pages/admin/auth/AdminForgotPassword";
 import AdminResetPassword from "./pages/admin/auth/AdminResetPassword";
 import { AdminAuthProvider } from "./contexts/AdminAuthContext";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
+import { AdBanner } from "./components/AdBanner";
 
 function HomePage() {
   useSEO({
@@ -45,14 +46,18 @@ function HomePage() {
     <div className="min-h-screen">
       <HeroSection />
       <FeaturesSection />
+      <AdBanner className="max-w-5xl mx-auto px-4 py-6" />
       <AboutSection />
       <ServicesSection />
+      <AdBanner className="max-w-5xl mx-auto px-4 py-6" />
       <HowItWorksSection />
       <WhyChooseUsSection />
       <StatisticsSection />
       <PricingSection />
+      <AdBanner className="max-w-5xl mx-auto px-4 py-6" />
       <ReviewsSection />
       <FAQSection />
+      <AdBanner className="max-w-5xl mx-auto px-4 py-6" />
       <FooterSection />
     </div>
   );
