@@ -1,11 +1,25 @@
-import { Phone, MapPin, Mail, X } from "lucide-react";
+import { Phone, Mail, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
 
+// Define prop types for the modals
+interface PolicyModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  content: React.ReactNode | null;
+}
+
+interface NotificationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  message: string;
+}
+
 // Modal Component
-const PolicyModal = ({ isOpen, onClose, title, content }) => {
+const PolicyModal = ({ isOpen, onClose, title, content }: PolicyModalProps) => {
   if (!isOpen) return null;
 
   return (
@@ -41,7 +55,7 @@ const PolicyModal = ({ isOpen, onClose, title, content }) => {
 };
 
 // Simple notification modal for unavailable features
-const NotificationModal = ({ isOpen, onClose, message }) => {
+const NotificationModal = ({ isOpen, onClose, message }: NotificationModalProps) => {
   if (!isOpen) return null;
 
   return (
@@ -76,14 +90,26 @@ const NotificationModal = ({ isOpen, onClose, message }) => {
   );
 };
 
+// Define the modal state types
+interface ModalState {
+  isOpen: boolean;
+  title: string;
+  content: React.ReactNode | null;
+}
+
+interface NotificationState {
+  isOpen: boolean;
+  message: string;
+}
+
 export const FooterSection = () => {
-  const [modalState, setModalState] = useState({
+  const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
     title: "",
     content: null,
   });
 
-  const [notificationState, setNotificationState] = useState({
+  const [notificationState, setNotificationState] = useState<NotificationState>({
     isOpen: false,
     message: "",
   });
@@ -222,7 +248,7 @@ export const FooterSection = () => {
     ),
   };
 
-  const openPolicyModal = (type) => {
+  const openPolicyModal = (type: string) => {
     let title = "";
     let content = null;
 
@@ -248,7 +274,7 @@ export const FooterSection = () => {
     });
   };
 
-  const openNotification = (message) => {
+  const openNotification = (message: string) => {
     setNotificationState({
       isOpen: true,
       message,
@@ -270,7 +296,7 @@ export const FooterSection = () => {
     });
   };
 
-  const handleCompanyLinkClick = (linkName) => {
+  const handleCompanyLinkClick = (linkName: string) => {
     openNotification(`${linkName} page is not available at this time.`);
   };
 
