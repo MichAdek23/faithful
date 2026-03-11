@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Mail, Phone, Info, MapPin, Home, Building2, MapPinned } from 'lucide-react';
+import { User, Mail, Phone, Info, MapPin, Chrome as Home, Building2, MapPinned } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { supabase } from '../../lib/supabase';
