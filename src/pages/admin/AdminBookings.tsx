@@ -89,9 +89,43 @@ export const AdminBookings = () => {
     }
   };
 
+  const sendStatusEmail = async (booking: Booking, newStatus: string) => {
+    try {
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-status-email`;
+      await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          booking_id: booking.id,
+          booking_code: booking.booking_code || booking.id.slice(0, 8).toUpperCase(),
+          customer_name: booking.customer_name,
+          customer_email: booking.customer_email,
+          customer_phone: "",
+          house_number: booking.house_number || "",
+          street_name: booking.street_name || "",
+          post_code: booking.post_code || "",
+          city: booking.city || "",
+          booking_date: booking.booking_date,
+          booking_time: booking.booking_time,
+          service_type: booking.service_type,
+          service_price: booking.service_price,
+          vehicle_type: booking.vehicle_type,
+          new_status: newStatus,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to send status email:", err);
+    }
+  };
+
   const updateBookingStatus = async (bookingId: string, newStatus: string) => {
     setUpdatingId(bookingId);
     setOpenMenuId(null);
+
+    const booking = bookings.find((b) => b.id === bookingId);
 
     const { error } = await supabase
       .from("bookings")
@@ -99,6 +133,9 @@ export const AdminBookings = () => {
       .eq("id", bookingId);
 
     if (!error) {
+      if (booking) {
+        sendStatusEmail(booking, newStatus);
+      }
       await fetchBookings();
     }
     setUpdatingId(null);
