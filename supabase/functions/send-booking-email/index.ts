@@ -62,6 +62,13 @@ Deno.serve(async (req: Request) => {
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
+    const formattedDate = new Date(booking_date).toLocaleDateString('en-GB', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
     const emailHtml = `
       <!DOCTYPE html>
       <html>
@@ -71,6 +78,8 @@ Deno.serve(async (req: Request) => {
               font-family: Arial, sans-serif;
               line-height: 1.6;
               color: #333;
+              margin: 0;
+              padding: 0;
             }
             .container {
               max-width: 600px;
@@ -78,16 +87,25 @@ Deno.serve(async (req: Request) => {
               padding: 20px;
             }
             .header {
-              background-color: #1E90FF;
+              background-color: #CA8A04;
               color: white;
               padding: 30px;
               text-align: center;
               border-radius: 8px 8px 0 0;
             }
+            .header h1 {
+              margin: 0 0 8px 0;
+              font-size: 24px;
+            }
+            .header p {
+              margin: 0;
+              opacity: 0.9;
+            }
             .content {
               background-color: #f9f9f9;
               padding: 30px;
               border: 1px solid #ddd;
+              border-top: none;
             }
             .booking-details {
               background-color: white;
@@ -101,6 +119,9 @@ Deno.serve(async (req: Request) => {
               padding: 10px 0;
               border-bottom: 1px solid #eee;
             }
+            .detail-row:last-child {
+              border-bottom: none;
+            }
             .detail-label {
               font-weight: bold;
               color: #555;
@@ -108,28 +129,45 @@ Deno.serve(async (req: Request) => {
             .detail-value {
               color: #333;
             }
+            .status-badge {
+              display: inline-block;
+              padding: 6px 16px;
+              background-color: #CA8A04;
+              color: white;
+              border-radius: 20px;
+              font-size: 14px;
+              font-weight: bold;
+            }
             .footer {
               text-align: center;
               padding: 20px;
               color: #666;
               font-size: 14px;
+              border: 1px solid #ddd;
+              border-top: none;
+              border-radius: 0 0 8px 8px;
+              background: #fafafa;
             }
             .price {
               font-size: 24px;
               font-weight: bold;
-              color: #1E90FF;
+              color: #CA8A04;
             }
           </style>
         </head>
         <body>
           <div class="container">
             <div class="header">
-              <h1>Booking Confirmed!</h1>
+              <h1>&#9200; Booking Received</h1>
               <p>Thank you for choosing Faithful Auto Care</p>
             </div>
             <div class="content">
               <p>Dear ${customer_name},</p>
-              <p>Your car wash appointment has been successfully booked. Here are your booking details:</p>
+              <p>Thank you for booking with Faithful Auto Care! We have received your booking and it is currently <strong>pending confirmation</strong>. Our team will review your booking and confirm it shortly.</p>
+
+              <div style="text-align: center; margin: 20px 0;">
+                <span class="status-badge">Pending Confirmation</span>
+              </div>
 
               <div class="booking-details">
                 <div class="detail-row">
@@ -146,12 +184,7 @@ Deno.serve(async (req: Request) => {
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Date:</span>
-                  <span class="detail-value">${new Date(booking_date).toLocaleDateString('en-GB', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}</span>
+                  <span class="detail-value">${formattedDate}</span>
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Time:</span>
@@ -163,14 +196,15 @@ Deno.serve(async (req: Request) => {
                 </div>
                 <div class="detail-row" style="border-bottom: none;">
                   <span class="detail-label">Total Price:</span>
-                  <span class="price">£${service_price}</span>
+                  <span class="price">&pound;${service_price}</span>
                 </div>
               </div>
 
-              <p><strong>What to expect:</strong></p>
+              <p><strong>What happens next?</strong></p>
               <ul>
-                <li>Our professional team will visit you at the address above</li>
-                <li>Average service duration is 30-45 minutes</li>
+                <li>Our team will review and confirm your booking</li>
+                <li>You will receive a confirmation email once approved</li>
+                <li>Our professional team will then visit you at the address above at the scheduled time</li>
                 <li>Payment can be made after the service</li>
               </ul>
 
@@ -187,7 +221,7 @@ Deno.serve(async (req: Request) => {
               Professional Shine, Exceptional Care</p>
             </div>
             <div class="footer">
-              <p>This is an automated confirmation email. Please do not reply to this email.</p>
+              <p>This is an automated email. Please do not reply to this email.</p>
             </div>
           </div>
         </body>
@@ -203,7 +237,7 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         from: "Faithful Auto Care <noreply@faithfulautocare.uk>",
         to: [customer_email],
-        subject: `Booking Confirmation - ${service_type} - ${new Date(booking_date).toLocaleDateString()}`,
+        subject: `Booking Received - ${service_type} - ${formattedDate}`,
         html: emailHtml,
       }),
     });
@@ -239,7 +273,7 @@ Deno.serve(async (req: Request) => {
                 padding: 20px;
               }
               .header {
-                background-color: #28a745;
+                background-color: #CA8A04;
                 color: white;
                 padding: 30px;
                 text-align: center;
@@ -278,12 +312,12 @@ Deno.serve(async (req: Request) => {
               .price {
                 font-size: 24px;
                 font-weight: bold;
-                color: #28a745;
+                color: #CA8A04;
               }
               .badge {
                 display: inline-block;
                 padding: 5px 10px;
-                background-color: #28a745;
+                background-color: #CA8A04;
                 color: white;
                 border-radius: 4px;
                 font-size: 12px;
@@ -294,8 +328,8 @@ Deno.serve(async (req: Request) => {
           <body>
             <div class="container">
               <div class="header">
-                <h1>🎉 New Booking Received!</h1>
-                <p>A new customer has scheduled a service</p>
+                <h1>New Booking - Pending Confirmation</h1>
+                <p>A new customer has submitted a booking that needs your review</p>
               </div>
               <div class="content">
                 <p><strong>Booking Details:</strong></p>
@@ -331,12 +365,7 @@ Deno.serve(async (req: Request) => {
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">Date:</span>
-                    <span class="detail-value">${new Date(booking_date).toLocaleDateString('en-GB', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}</span>
+                    <span class="detail-value">${formattedDate}</span>
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">Time:</span>
@@ -344,18 +373,18 @@ Deno.serve(async (req: Request) => {
                   </div>
                   <div class="detail-row" style="border-bottom: none;">
                     <span class="detail-label">Service Price:</span>
-                    <span class="price">£${service_price}</span>
+                    <span class="price">&pound;${service_price}</span>
                   </div>
                 </div>
 
                 <p><strong>Action Required:</strong></p>
                 <ul>
                   <li>Review the booking in the admin dashboard</li>
-                  <li>Prepare team and resources for the scheduled time</li>
-                  <li>Contact customer if any clarification is needed</li>
+                  <li>Confirm or cancel the booking</li>
+                  <li>The customer will be notified automatically once you update the status</li>
                 </ul>
 
-                <p>This booking has been automatically confirmed and the customer has received a confirmation email.</p>
+                <p>This booking is currently <strong>pending</strong> and the customer has been notified that it is awaiting confirmation.</p>
               </div>
               <div class="footer">
                 <p>This is an automated notification from Faithful Auto Care booking system.</p>
@@ -376,7 +405,7 @@ Deno.serve(async (req: Request) => {
         body: JSON.stringify({
           from: "Faithful Auto Care <noreply@faithfulautocare.uk>",
           to: adminEmails,
-          subject: `New Booking: ${service_type} - ${new Date(booking_date).toLocaleDateString()} at ${booking_time}`,
+          subject: `New Booking Pending: ${service_type} - ${formattedDate} at ${booking_time}`,
           html: adminEmailHtml,
         }),
       });
@@ -389,7 +418,7 @@ Deno.serve(async (req: Request) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Booking confirmation email sent successfully",
+        message: "Booking pending email sent successfully",
         emailId: customerData.id,
       }),
       {

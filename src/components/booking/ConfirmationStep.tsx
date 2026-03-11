@@ -30,12 +30,12 @@ export function ConfirmationStep({ bookingData, bookingId }: ConfirmationStepPro
   return (
     <div className="space-y-8 text-center">
       <div className="flex flex-col items-center space-y-4">
-        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-green-100 flex items-center justify-center">
-          <CheckCircle2 className="w-10 h-10 sm:w-12 sm:h-12 text-green-600" />
+        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-amber-100 flex items-center justify-center">
+          <Clock className="w-10 h-10 sm:w-12 sm:h-12 text-amber-600" />
         </div>
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Booking Confirmed</h2>
-          <p className="text-sm sm:text-base text-gray-600">Your appointment is scheduled we will see your soon</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Booking Submitted</h2>
+          <p className="text-sm sm:text-base text-gray-600">Your booking is pending confirmation from our team</p>
         </div>
 
         <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300 rounded-xl p-4 sm:p-6 mt-4 w-full max-w-sm">
@@ -95,10 +95,10 @@ export function ConfirmationStep({ bookingData, bookingId }: ConfirmationStepPro
         </div>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-semibold text-gray-900 mb-2">What's Next ?</h4>
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <h4 className="font-semibold text-gray-900 mb-2">What's Next?</h4>
         <p className="text-sm text-gray-600">
-          You will receive a confirmation email shortly. We'll send you a reminder 24 hours before your appointment.
+          We have received your booking and will review it shortly. You will receive an email once your booking has been confirmed by our team.
         </p>
       </div>
 

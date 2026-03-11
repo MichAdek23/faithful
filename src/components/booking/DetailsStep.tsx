@@ -80,7 +80,7 @@ export function DetailsStep({
             street_name: street,
             post_code: postcode,
             city: town,
-            status: 'confirmed'
+            status: 'pending'
           }
         ])
         .select()
