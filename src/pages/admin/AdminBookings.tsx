@@ -3,15 +3,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Search,
-  Filter,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Droplets,
-  ChevronDown,
-} from "lucide-react";
+import { Search, Filter, CircleCheck as CheckCircle, Circle as XCircle, Clock, Droplets, ChevronDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface Booking {
