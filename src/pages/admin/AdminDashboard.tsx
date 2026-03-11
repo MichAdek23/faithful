@@ -161,6 +161,7 @@ export const AdminDashboard = () => {
       const uniqueCustomers = new Set(bookings.map(b => b.customer_email)).size;
       const confirmed = bookings.filter(b => b.status === "confirmed").length;
       const cancelled = bookings.filter(b => b.status === "cancelled").length;
+      const washed = bookings.filter(b => b.status === "washed").length;
 
       // Calculate previous period stats
       const prevTotalBookings = previousBookings?.length || 0;
@@ -189,7 +190,7 @@ export const AdminDashboard = () => {
         revenue,
         totalCustomers: uniqueCustomers,
         avgRating: Math.round(avgRating * 10) / 10,
-        completionRate: totalBookings > 0 ? Math.round((confirmed / totalBookings) * 100) : 0,
+        completionRate: totalBookings > 0 ? Math.round((washed / totalBookings) * 100) : 0,
         cancellationRate: totalBookings > 0 ? Math.round((cancelled / totalBookings) * 100) : 0,
         satisfaction: avgRating,
         bookingsGrowth,
@@ -198,7 +199,7 @@ export const AdminDashboard = () => {
       });
 
       const upcoming = bookings
-        .filter(b => b.status === "confirmed")
+        .filter(b => b.status === "confirmed" || b.status === "pending")
         .sort((a, b) => new Date(a.booking_date + ' ' + a.booking_time).getTime() - new Date(b.booking_date + ' ' + b.booking_time).getTime())
         .slice(0, 3);
       setUpcomingBookings(upcoming as Booking[]);
@@ -481,7 +482,10 @@ export const AdminDashboard = () => {
                   </div>
                   <div className="flex items-center gap-4">
                     <span className={`rounded-full px-3 py-1 text-xs font-medium ${
-                      booking.status === "confirmed" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                      booking.status === "washed" ? "bg-blue-100 text-blue-700" :
+                      booking.status === "confirmed" ? "bg-green-100 text-green-700" :
+                      booking.status === "cancelled" ? "bg-red-100 text-red-700" :
+                      "bg-yellow-100 text-yellow-700"
                     }`}>
                       {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                     </span>
@@ -688,7 +692,10 @@ export const AdminDashboard = () => {
                 <div>
                   <p className="text-sm text-gray-500">Status</p>
                   <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${
-                    selectedBooking.status === "confirmed" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                    selectedBooking.status === "washed" ? "bg-blue-100 text-blue-700" :
+                    selectedBooking.status === "confirmed" ? "bg-green-100 text-green-700" :
+                    selectedBooking.status === "cancelled" ? "bg-red-100 text-red-700" :
+                    "bg-yellow-100 text-yellow-700"
                   }`}>
                     {selectedBooking.status.charAt(0).toUpperCase() + selectedBooking.status.slice(1)}
                   </span>

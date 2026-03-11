@@ -174,9 +174,14 @@ export default function ViewBookingsPage() {
                               </span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1.5 sm:gap-2 bg-green-50 text-green-700 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
+                          <div className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${
+                            booking.status === "washed" ? "bg-blue-50 text-blue-700" :
+                            booking.status === "confirmed" ? "bg-green-50 text-green-700" :
+                            booking.status === "cancelled" ? "bg-red-50 text-red-700" :
+                            "bg-yellow-50 text-yellow-700"
+                          }`}>
                             <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                            {booking.status === "washed" ? "Completed" : booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                           </div>
                         </div>
 
