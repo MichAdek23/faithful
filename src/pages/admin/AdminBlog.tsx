@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AlertDialog } from '@/components/ui/dialog';
-import { Search, Plus, Edit2, Trash2, Eye, EyeOff, FileText, ExternalLink } from 'lucide-react';
+import { Search, Plus, CreditCard as Edit2, Trash2, Eye, EyeOff, FileText, ExternalLink } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface BlogPost {
