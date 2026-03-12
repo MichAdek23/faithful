@@ -8,6 +8,8 @@ import { ConfirmationStep } from '../components/booking/ConfirmationStep';
 import { FooterSection } from '../sections/FooterSection';
 import { AdBanner } from '../components/AdBanner';
 
+const STORAGE_KEY = 'faithful-booking-draft';
+
 interface BookingData {
   date: string;
   time: string;
@@ -50,9 +52,39 @@ export function BookingPage() {
     };
   }, []);
 
-  const [currentStep, setCurrentStep] = useState(1);
-  const [bookingData, setBookingData] = useState<Partial<BookingData>>({});
+  const [currentStep, setCurrentStep] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.step || 1;
+      } catch { return 1; }
+    }
+    return 1;
+  });
+
+  const [bookingData, setBookingData] = useState<Partial<BookingData>>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.data || {};
+      } catch { return {}; }
+    }
+    return {};
+  });
+
   const [bookingId, setBookingId] = useState<string>('');
+
+  useEffect(() => {
+    if (currentStep < 5) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ step: currentStep, data: bookingData }));
+    }
+  }, [currentStep, bookingData]);
+
+  const clearDraft = () => {
+    localStorage.removeItem(STORAGE_KEY);
+  };
 
   const updateBookingData = (data: Partial<BookingData>) => {
     setBookingData(prev => ({ ...prev, ...data }));
@@ -138,6 +170,7 @@ export function BookingPage() {
               onDetailsChange={updateBookingData}
               onNext={(id) => {
                 setBookingId(id);
+                clearDraft();
                 nextStep();
               }}
               onBack={prevStep}
