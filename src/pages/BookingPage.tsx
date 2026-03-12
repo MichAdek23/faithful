@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSEO } from '../hooks/useSEO';
 import { DateStep } from '../components/booking/DateStep';
 import { TimeStep } from '../components/booking/TimeStep';
@@ -33,6 +33,22 @@ export function BookingPage() {
     keywords:
       "book car wash, schedule car detailing, mobile car wash booking, car valet appointment, Faithful Auto Care booking",
   });
+
+  useEffect(() => {
+    const scriptId = 'monetag-social-bar';
+    if (document.getElementById(scriptId)) return;
+
+    const script = document.createElement('script');
+    script.id = scriptId;
+    script.dataset.zone = '10717141';
+    script.src = 'https://al5sm.com/tag.min.js';
+    document.body.appendChild(script);
+
+    return () => {
+      const existing = document.getElementById(scriptId);
+      if (existing) existing.remove();
+    };
+  }, []);
 
   const [currentStep, setCurrentStep] = useState(1);
   const [bookingData, setBookingData] = useState<Partial<BookingData>>({});
