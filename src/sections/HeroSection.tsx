@@ -24,7 +24,7 @@ export const HeroSection = () => {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 z-50 w-full">
+      <nav className="fixed top-0 left-0 z-50 w-full max-w-[100vw] overflow-x-hidden">
         <div className="mx-auto mt-4 sm:mt-6 max-w-7xl px-3 sm:px-6">
           <div className="flex h-16 sm:h-14 items-center justify-between rounded-full bg-[#D6EAF84D] backdrop-blur-md px-4 sm:px-6 shadow-lg">
             <div className="flex items-center gap-2 sm:gap-3">
@@ -196,13 +196,15 @@ export const HeroSection = () => {
 
       <section
         id="hero"
-        className="relative flex min-h-[100dvh] w-full items-center overflow-hidden"
+        className="relative flex min-h-[100svh] w-full max-w-[100vw] items-center overflow-hidden"
       >
-        <img
-          src="/LandingPage1.png"
-          alt="Car wash background"
-          className="absolute inset-0 w-full h-full object-cover md:blur-[2px] blur-md lg:blur-0"
-        />
+        <div className="absolute inset-0 overflow-hidden">
+          <img
+            src="/LandingPage1.png"
+            alt="Car wash background"
+            className="w-full h-full object-cover md:blur-[2px] blur-md lg:blur-0"
+          />
+        </div>
 
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-transparent md:from-black/70 md:via-black/40 lg:from-black/40 lg:via-transparent"></div>
 
