@@ -31,9 +31,14 @@ export function DateStep({ selectedDate, onDateSelect, onNext }: DateStepProps) 
 
   const dayNames = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
+  const formatDateString = (year: number, month: number, day: number) => {
+    const m = String(month + 1).padStart(2, '0');
+    const d = String(day).padStart(2, '0');
+    return `${year}-${m}-${d}`;
+  };
+
   const handleDateClick = (day: number) => {
-    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-    const dateString = date.toISOString().split('T')[0];
+    const dateString = formatDateString(currentMonth.getFullYear(), currentMonth.getMonth(), day);
     setLocalSelectedDate(dateString);
     onDateSelect(dateString);
   };
@@ -63,8 +68,7 @@ export function DateStep({ selectedDate, onDateSelect, onNext }: DateStepProps) 
 
   const isDateSelected = (day: number) => {
     if (!localSelectedDate) return false;
-    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-    return date.toISOString().split('T')[0] === localSelectedDate;
+    return formatDateString(currentMonth.getFullYear(), currentMonth.getMonth(), day) === localSelectedDate;
   };
 
   return (
