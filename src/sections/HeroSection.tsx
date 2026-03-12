@@ -210,11 +210,13 @@ export const HeroSection = () => {
 
         <div className="relative z-10 w-full px-6 md:px-12 lg:px-20 xl:px-28 py-24 md:py-32">
           <div className="max-w-4xl text-white">
-
             {/* Updated Headline - Now showing serving area in two lines */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 drop-shadow-lg animate-slideInLeft">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 drop-shadow-lg animate-slideInLeft">
               <span className="block">Serving Bedfordshire,</span>
-              <span className="block mt-2">Hertfordshire & Surrounding Areas</span>
+              <span className="block sm:hidden mt-2">Hertfordshire</span>
+              <span className="hidden sm:block md:hidden mt-2">Hertfordshire &</span>
+              <span className="hidden md:block mt-2">Hertfordshire & Surrounding Areas</span>
+              <span className="block sm:hidden mt-2">& Surrounding Areas</span>
             </h1>
 
             {/* Paragraph */}
@@ -223,20 +225,13 @@ export const HeroSection = () => {
               spotless, refreshed, ready to own the road with confidence.
             </p>
 
-            {/* Serving Area Badge - Now positioned below the CTA section */}
-            <div className="animate-slideInLeft animation-delay-400">
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 text-xs sm:text-sm md:text-base font-medium text-white shadow-md">
-                <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
-                Mobile detailing at your location
-              </span>
-            </div><br></br>
-
+            
             {/* CTA Section - Book Now and Offer Badge together */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-8 animate-slideInLeft animation-delay-300">
               {/* Book Now Button */}
               <Button
                 onClick={() => navigate("/book-now")}
-                className="rounded-lg bg-blue-600 px-8 py-6 text-base font-semibold hover:bg-blue-700 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 w-full sm:w-auto"
+                className="rounded-lg bg-blue-600 px-4 py-3 text-sm sm:px-8 sm:py-6 sm:text-base font-semibold hover:bg-blue-700 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 w-auto"
               >
                 Book Now
               </Button>
@@ -253,13 +248,9 @@ export const HeroSection = () => {
                 </div>
               </div>
             </div>
-
-
           </div>
         </div>
-              
       </section>
-
     </>
   );
 };
