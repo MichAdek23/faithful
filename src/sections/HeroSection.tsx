@@ -210,19 +210,19 @@ export const HeroSection = () => {
           <div className="max-w-4xl text-white">
 
             {/* Updated Headline - Now showing serving area in two lines */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 drop-shadow-lg opacity-0 animate-slideInLeft">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 drop-shadow-lg animate-slideInLeft">
               <span className="block">Serving Bedfordshire,</span>
               <span className="block mt-2">Hertfordshire & Surrounding Areas</span>
             </h1>
 
             {/* Paragraph */}
-            <p className="text-base md:text-lg lg:text-xl font-medium leading-relaxed text-white/95 mb-8 max-w-lg drop-shadow-md opacity-0 animate-slideInLeft animation-delay-200">
+            <p className="text-base md:text-lg lg:text-xl font-medium leading-relaxed text-white/95 mb-8 max-w-lg drop-shadow-md animate-slideInLeft animation-delay-200">
               Where every wash restores that brand new feeling, leaving your car
               spotless, refreshed, ready to own the road with confidence.
             </p>
 
             {/* Serving Area Badge - Now positioned below the CTA section */}
-            <div className="opacity-0 animate-slideInLeft animation-delay-400">
+            <div className="animate-slideInLeft animation-delay-400">
               <span className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 text-xs sm:text-sm md:text-base font-medium text-white shadow-md">
                 <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
                 Mobile detailing at your location
@@ -230,7 +230,7 @@ export const HeroSection = () => {
             </div><br></br>
 
             {/* CTA Section - Book Now and Offer Badge together */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-8 opacity-0 animate-slideInLeft animation-delay-300">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-8 animate-slideInLeft animation-delay-300">
               {/* Book Now Button */}
               <Button
                 onClick={() => navigate("/book-now")}
@@ -258,36 +258,6 @@ export const HeroSection = () => {
               
       </section>
 
-      {/* Add the floating animation to your global CSS or in a style tag */}
-      <style jsx>{`
-        @keyframes float {
-          0% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-10px);
-          }
-          100% {
-            transform: translateY(0px);
-          }
-        }
-        
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
-        }
-        
-        .animation-delay-200 {
-          animation-delay: 200ms;
-        }
-        
-        .animation-delay-300 {
-          animation-delay: 300ms;
-        }
-        
-        .animation-delay-400 {
-          animation-delay: 400ms;
-        }
-      `}</style>
     </>
   );
 };
