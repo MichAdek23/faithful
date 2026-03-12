@@ -6,7 +6,6 @@ import { Card } from '../components/ui/card';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
-import { AdBanner } from '../components/AdBanner';
 
 interface Booking {
   id: string;
@@ -132,7 +131,6 @@ export default function ViewBookingsPage() {
           </div>
         </Card>
 
-        <AdBanner className="mb-6" />
 
         {hasSearched && !isLoading && (
           <div className="space-y-4">
