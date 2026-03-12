@@ -1,4 +1,5 @@
 import { Phone, Mail, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -103,6 +104,7 @@ interface NotificationState {
 }
 
 export const FooterSection = () => {
+  const navigate = useNavigate();
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
     title: "",
@@ -297,6 +299,10 @@ export const FooterSection = () => {
   };
 
   const handleCompanyLinkClick = (linkName: string) => {
+    if (linkName === 'Blog') {
+      navigate('/blog');
+      return;
+    }
     openNotification(`${linkName} page is not available at this time.`);
   };
 

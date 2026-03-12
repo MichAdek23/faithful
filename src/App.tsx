@@ -31,6 +31,10 @@ import AdminResetPassword from "./pages/admin/auth/AdminResetPassword";
 import { AdminAuthProvider } from "./contexts/AdminAuthContext";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 import { AdBanner } from "./components/AdBanner";
+import { BlogPage } from "./pages/BlogPage";
+import { BlogPostPage } from "./pages/BlogPostPage";
+import { AdminBlog } from "./pages/admin/AdminBlog";
+import { AdminBlogEditor } from "./pages/admin/AdminBlogEditor";
 
 function HomePage() {
   useSEO({
@@ -95,6 +99,8 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/book-now" element={<BookingPage />} />
         <Route path="/view-bookings" element={<ViewBookingsPage />} />
+        <Route path="/blog" element={<BlogPage />} />
+        <Route path="/blog/:slug" element={<BlogPostPage />} />
 
         <Route path="/admin/signin" element={<AdminSignIn />} />
         <Route path="/admin/signup" element={<AdminSignUp />} />
@@ -112,6 +118,9 @@ function App() {
         <Route path="/admin/notifications" element={<ProtectedRoute><AdminNotificationsList /></ProtectedRoute>} />
         <Route path="/admin/notifications/settings" element={<ProtectedRoute><AdminNotifications /></ProtectedRoute>} />
         <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
+        <Route path="/admin/blog" element={<ProtectedRoute><AdminBlog /></ProtectedRoute>} />
+        <Route path="/admin/blog/new" element={<ProtectedRoute><AdminBlogEditor /></ProtectedRoute>} />
+        <Route path="/admin/blog/edit/:id" element={<ProtectedRoute><AdminBlogEditor /></ProtectedRoute>} />
       </Routes>
     </AdminAuthProvider>
   );

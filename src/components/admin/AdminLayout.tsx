@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Calendar, Clock, Users, Settings as SettingsIcon, Star, UserCog, LogOut, ChevronLeft, Bell, Menu, X } from "lucide-react";
+import { LayoutDashboard, Calendar, Clock, Users, Settings as SettingsIcon, Star, UserCog, LogOut, ChevronLeft, Bell, Menu, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -26,6 +26,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     { icon: Star, label: "Reviews", path: "/admin/reviews" },
     { icon: UserCog, label: "Teams", path: "/admin/teams" },
     { icon: Bell, label: "Notifications", path: "/admin/notifications" },
+    { icon: FileText, label: "Blog", path: "/admin/blog" },
   ];
 
   const isActive = (path: string) => {

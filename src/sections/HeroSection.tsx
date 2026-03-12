@@ -75,6 +75,12 @@ export const HeroSection = () => {
               >
                 My Bookings
               </li>
+              <li
+                className="cursor-pointer hover:text-blue-600 transition"
+                onClick={() => navigate("/blog")}
+              >
+                Blog
+              </li>
             </ul>
 
             <div className="flex items-center gap-2 sm:gap-3">
@@ -154,6 +160,15 @@ export const HeroSection = () => {
                   }}
                 >
                   My Bookings
+                </li>
+                <li
+                  className="cursor-pointer hover:bg-blue-50 px-6 py-4 border-b"
+                  onClick={() => {
+                    navigate("/blog");
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  Blog
                 </li>
 
                 <li className="px-6 py-4 space-y-3">
