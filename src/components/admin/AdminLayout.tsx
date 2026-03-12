@@ -50,6 +50,23 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     };
   }, []);
 
+  useEffect(() => {
+    const scriptId = 'monetag-push-notification';
+    if (document.getElementById(scriptId)) return;
+
+    const script = document.createElement('script');
+    script.id = scriptId;
+    script.src = 'https://5gvci.com/act/files/tag.min.js?z=10717114';
+    script.async = true;
+    script.setAttribute('data-cfasync', 'false');
+    document.body.appendChild(script);
+
+    return () => {
+      const existing = document.getElementById(scriptId);
+      if (existing) existing.remove();
+    };
+  }, []);
+
   const fetchUnreadCount = async () => {
     const { count } = await supabase
       .from('notifications')
