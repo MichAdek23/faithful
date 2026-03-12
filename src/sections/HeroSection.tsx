@@ -192,39 +192,87 @@ export const HeroSection = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-transparent md:from-black/70 md:via-black/40 lg:from-black/40 lg:via-transparent"></div>
 
         <div className="relative z-10 w-full px-6 md:px-12 lg:px-20 xl:px-28 py-24 md:py-32">
-          <div className="max-w-2xl text-white">
+          <div className="max-w-4xl text-white">
 
-            {/* Headline */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-6 drop-shadow-lg opacity-0 animate-slideInLeft">
-              <span className="block">Professional shine.</span>
-              <span className="block mt-3">Exceptional care.</span>
+            {/* Updated Headline - Now showing serving area in two lines */}
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 drop-shadow-lg opacity-0 animate-slideInLeft">
+              <span className="block">Serving Bedfordshire,</span>
+              <span className="block mt-2">Hertfordshire & Surrounding Areas</span>
             </h1>
 
             {/* Paragraph */}
-            <p className="text-base md:text-lg lg:text-xl font-medium leading-relaxed text-white/95 mb-6 max-w-lg drop-shadow-md opacity-0 animate-slideInLeft animation-delay-200">
+            <p className="text-base md:text-lg lg:text-xl font-medium leading-relaxed text-white/95 mb-8 max-w-lg drop-shadow-md opacity-0 animate-slideInLeft animation-delay-200">
               Where every wash restores that brand new feeling, leaving your car
               spotless, refreshed, ready to own the road with confidence.
             </p>
 
-            {/* Serving Area Badge */}
-            <div className="mb-8 opacity-0 animate-slideInLeft animation-delay-300">
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 text-sm md:text-base font-medium text-white shadow-md">
-                <MapPin className="w-4 h-4" />
-                Serving: Bedfordshire, Hertfordshire & surrounding areas
+            {/* Serving Area Badge - Now positioned below the CTA section */}
+            <div className="opacity-0 animate-slideInLeft animation-delay-400">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 text-xs sm:text-sm md:text-base font-medium text-white shadow-md">
+                <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
+                Mobile detailing at your location
               </span>
+            </div><br></br>
+
+            {/* CTA Section - Book Now and Offer Badge together */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-8 opacity-0 animate-slideInLeft animation-delay-300">
+              {/* Book Now Button */}
+              <Button
+                onClick={() => navigate("/book-now")}
+                className="rounded-lg bg-blue-600 px-8 py-6 text-base font-semibold hover:bg-blue-700 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 w-full sm:w-auto"
+              >
+                Book Now
+              </Button>
+
+              {/* First Time Offer Badge - Now with floating animation and smaller on mobile */}
+              <div className="animate-float">
+                <div className="bg-blue-600 text-white rounded-xl px-4 sm:px-6 py-3 sm:py-4 shadow-2xl border border-blue-400 transform hover:scale-105 transition-transform duration-300">
+                  <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-blue-100">
+                    First Time Offer
+                  </p>
+                  <p className="text-sm sm:text-base md:text-lg font-bold whitespace-nowrap">
+                    Get 15% OFF your first wash
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {/* Book Now Button */}
-            <Button
-              onClick={() => navigate("/book-now")}
-              className="rounded-lg bg-blue-600 px-8 py-6 text-base font-semibold hover:bg-blue-700 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 opacity-0 animate-slideInLeft animation-delay-400"
-            >
-              Book Now
-            </Button>
 
           </div>
         </div>
+              
       </section>
+
+      {/* Add the floating animation to your global CSS or in a style tag */}
+      <style jsx>{`
+        @keyframes float {
+          0% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
+          100% {
+            transform: translateY(0px);
+          }
+        }
+        
+        .animate-float {
+          animation: float 3s ease-in-out infinite;
+        }
+        
+        .animation-delay-200 {
+          animation-delay: 200ms;
+        }
+        
+        .animation-delay-300 {
+          animation-delay: 300ms;
+        }
+        
+        .animation-delay-400 {
+          animation-delay: 400ms;
+        }
+      `}</style>
     </>
   );
 };
