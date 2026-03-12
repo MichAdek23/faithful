@@ -1,4 +1,4 @@
-import { MessageCircle, Phone, Menu, X } from "lucide-react";
+import { MessageCircle, Phone, Menu, X, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -33,10 +33,7 @@ export const HeroSection = () => {
                 alt="Faithful Auto Care Logo"
                 className="h-8 sm:h-10 w-auto"
               />
-              <span className="text-sm sm:text-lg text-blue-900 font-semibold uppercase tracking-wide hidden sm:inline">
-                Faithful Auto Care
-              </span>
-              <span className="text-xs sm:text-lg text-blue-900 font-semibold uppercase tracking-wide sm:hidden">
+              <span className="text-sm sm:text-lg text-blue-900 font-semibold uppercase tracking-wide">
                 Faithful Auto Care
               </span>
             </div>
@@ -82,14 +79,16 @@ export const HeroSection = () => {
 
             <div className="flex items-center gap-2 sm:gap-3">
               <Button
-                onClick={() => window.open('https://wa.me/447473052794', '_blank')}
+                onClick={() =>
+                  window.open("https://wa.me/447473052794", "_blank")
+                }
                 className="hidden lg:flex rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
               >
                 <MessageCircle className="w-4 h-4 mr-1" /> Chat us
               </Button>
 
               <Button
-                onClick={() => window.location.href = 'tel:07473052794'}
+                onClick={() => (window.location.href = "tel:07473052794")}
                 className="hidden lg:flex rounded-full bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
               >
                 <Phone className="w-4 h-4 mr-1" /> Call
@@ -99,7 +98,11 @@ export const HeroSection = () => {
                 className="lg:hidden rounded-full bg-blue-600 p-2 text-white hover:bg-blue-700"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
-                {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                {isMobileMenuOpen ? (
+                  <X className="w-5 h-5" />
+                ) : (
+                  <Menu className="w-5 h-5" />
+                )}
               </Button>
             </div>
           </div>
@@ -114,37 +117,37 @@ export const HeroSection = () => {
             <div className="relative mx-3 sm:mx-6 mt-2 rounded-3xl bg-white shadow-2xl overflow-hidden">
               <ul className="flex flex-col text-base font-medium">
                 <li
-                  className="cursor-pointer hover:bg-blue-50 transition px-6 py-4 border-b border-gray-100"
+                  className="cursor-pointer hover:bg-blue-50 px-6 py-4 border-b"
                   onClick={() => scrollToSection("hero")}
                 >
                   Home
                 </li>
                 <li
-                  className="cursor-pointer hover:bg-blue-50 transition px-6 py-4 border-b border-gray-100"
+                  className="cursor-pointer hover:bg-blue-50 px-6 py-4 border-b"
                   onClick={() => scrollToSection("about")}
                 >
                   About Us
                 </li>
                 <li
-                  className="cursor-pointer hover:bg-blue-50 transition px-6 py-4 border-b border-gray-100"
+                  className="cursor-pointer hover:bg-blue-50 px-6 py-4 border-b"
                   onClick={() => scrollToSection("services")}
                 >
                   Services
                 </li>
                 <li
-                  className="cursor-pointer hover:bg-blue-50 transition px-6 py-4 border-b border-gray-100"
+                  className="cursor-pointer hover:bg-blue-50 px-6 py-4 border-b"
                   onClick={() => scrollToSection("process")}
                 >
                   Process
                 </li>
                 <li
-                  className="cursor-pointer hover:bg-blue-50 transition px-6 py-4 border-b border-gray-100"
+                  className="cursor-pointer hover:bg-blue-50 px-6 py-4 border-b"
                   onClick={() => scrollToSection("pricing")}
                 >
                   Price
                 </li>
                 <li
-                  className="cursor-pointer hover:bg-blue-50 transition px-6 py-4 border-b border-gray-100"
+                  className="cursor-pointer hover:bg-blue-50 px-6 py-4 border-b"
                   onClick={() => {
                     navigate("/view-bookings");
                     setIsMobileMenuOpen(false);
@@ -152,23 +155,20 @@ export const HeroSection = () => {
                 >
                   My Bookings
                 </li>
+
                 <li className="px-6 py-4 space-y-3">
                   <Button
-                    onClick={() => {
-                      window.open('https://wa.me/447473052794', '_blank');
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full rounded-full bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700"
+                    onClick={() =>
+                      window.open("https://wa.me/447473052794", "_blank")
+                    }
+                    className="w-full rounded-full bg-blue-600 text-white"
                   >
                     <MessageCircle className="w-4 h-4 mr-2" /> Chat with us
                   </Button>
 
                   <Button
-                    onClick={() => {
-                      window.location.href = 'tel:07473052794';
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full rounded-full bg-blue-500 px-4 py-3 text-sm font-medium text-white hover:bg-blue-600"
+                    onClick={() => (window.location.href = "tel:07473052794")}
+                    className="w-full rounded-full bg-blue-500 text-white"
                   >
                     <Phone className="w-4 h-4 mr-2" /> Call us
                   </Button>
@@ -183,34 +183,45 @@ export const HeroSection = () => {
         id="hero"
         className="relative flex min-h-[100dvh] w-full items-center overflow-hidden"
       >
-        {/* Background image with progressive blur: mobile > tablet > desktop */}
         <img
           src="/LandingPage1.png"
           alt="Car wash background"
           className="absolute inset-0 w-full h-full object-cover md:blur-[2px] blur-md lg:blur-0"
         />
 
-        {/* Progressive dark overlay: stronger on mobile and tablet */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-transparent md:from-black/70 md:via-black/40 md:to-transparent lg:from-black/40 lg:via-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-transparent md:from-black/70 md:via-black/40 lg:from-black/40 lg:via-transparent"></div>
 
-        <div className="relative z-10 w-full px-6 py-24 md:py-32">
+        <div className="relative z-10 w-full px-6 md:px-12 lg:px-20 xl:px-28 py-24 md:py-32">
           <div className="max-w-2xl text-white">
+
+            {/* Headline */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-6 drop-shadow-lg opacity-0 animate-slideInLeft">
               <span className="block">Professional shine.</span>
               <span className="block mt-3">Exceptional care.</span>
             </h1>
 
-            <p className="text-base md:text-lg lg:text-xl font-medium leading-relaxed text-white/95 mb-8 max-w-lg drop-shadow-md opacity-0 animate-slideInLeft animation-delay-200">
+            {/* Paragraph */}
+            <p className="text-base md:text-lg lg:text-xl font-medium leading-relaxed text-white/95 mb-6 max-w-lg drop-shadow-md opacity-0 animate-slideInLeft animation-delay-200">
               Where every wash restores that brand new feeling, leaving your car
               spotless, refreshed, ready to own the road with confidence.
             </p>
 
+            {/* Serving Area Badge */}
+            <div className="mb-8 opacity-0 animate-slideInLeft animation-delay-300">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 text-sm md:text-base font-medium text-white shadow-md">
+                <MapPin className="w-4 h-4" />
+                Serving: Bedfordshire, Hertfordshire & surrounding areas
+              </span>
+            </div>
+
+            {/* Book Now Button */}
             <Button
-              onClick={() => navigate('/book-now')}
+              onClick={() => navigate("/book-now")}
               className="rounded-lg bg-blue-600 px-8 py-6 text-base font-semibold hover:bg-blue-700 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 opacity-0 animate-slideInLeft animation-delay-400"
             >
               Book Now
             </Button>
+
           </div>
         </div>
       </section>
