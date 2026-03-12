@@ -32,7 +32,7 @@ export const AboutSection = () => {
             <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 z-20 w-[120px] sm:w-[136px] h-[60px] sm:h-[67px] bg-[#A8D4F5] rounded-xl flex items-center justify-center gap-2 text-sm font-medium text-black shadow-md animate-float">
               <Car className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="text-left leading-tight text-[10px] sm:text-xs">
-                21 years of<br />
+                3 years of<br />
                 quality<br />
                 service
               </span>

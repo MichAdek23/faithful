@@ -4,17 +4,17 @@ export const StatisticsSection = () => {
   const stats = [
     {
       icon: Users,
-      number: "10,000+",
+      number: "100+",
       label: "Happy Customers",
     },
     {
       icon: Car,
-      number: "50,000+",
+      number: "100+",
       label: "Cars Washed",
     },
     {
       icon: Award,
-      number: "21",
+      number: "3",
       label: "Years Experience",
     },
     {
