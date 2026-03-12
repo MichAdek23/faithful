@@ -46,6 +46,17 @@ export const PricingSection = () => {
             Choose the perfect package for your vehicle
           </p>
         </div>
+        {/* First Time Offer Badge - Now with floating animation and smaller on mobile */}
+        <div className="animate-float flex justify-center mb-8">
+          <div className="bg-[#002855] text-white rounded-xl px-5 sm:px-6 py-2.5 sm:py-3 shadow-2xl border border-blue-400 transform hover:scale-105 transition-transform duration-300 inline-block">
+            <p className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-widest text-blue-100">
+              First Time Offer
+            </p>
+            <p className="text-sm sm:text-base font-bold whitespace-nowrap">
+              15% OFF your first wash
+            </p>
+          </div>
+        </div>
 
         <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
           {services.map((service, index) => {

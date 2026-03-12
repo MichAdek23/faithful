@@ -52,10 +52,10 @@ function HomePage() {
       <FeaturesSection />
       <AboutSection />
       <ServicesSection />
+      <PricingSection />
       <HowItWorksSection />
       <WhyChooseUsSection />
       <StatisticsSection />
-      <PricingSection />
       <ReviewsSection />
       <FAQSection />
       <AdBanner className="max-w-5xl mx-auto px-4 py-6" />
