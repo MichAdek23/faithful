@@ -66,7 +66,6 @@ function HomePage() {
     <div className="min-h-screen">
       <HeroSection />
       <FeaturesSection />
-      <AdBanner className="max-w-5xl mx-auto px-4 py-6" />
       <AboutSection />
       <ServicesSection />
       <AdBanner className="max-w-5xl mx-auto px-4 py-6" />
