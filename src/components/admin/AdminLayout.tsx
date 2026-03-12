@@ -152,7 +152,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         />
       )}
 
-      <main className={`flex-1 transition-all duration-300 ${isCollapsed ? "lg:ml-20" : "lg:ml-64"} ml-0`}>
+      <main className={`flex-1 transition-all duration-300 ${isCollapsed ? "lg:ml-20" : "lg:ml-64"} ml-0 overflow-x-hidden max-w-full`}>
         <header className="sticky top-0 z-30 border-b bg-white px-4 sm:px-8 py-4">
           <div className="flex items-center justify-between lg:justify-end gap-4">
             <Button
@@ -188,7 +188,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
           </div>
         </header>
 
-        <div className="p-8">{children}</div>
+        <div className="p-4 sm:p-6 lg:p-8 overflow-hidden">{children}</div>
       </main>
     </div>
   );

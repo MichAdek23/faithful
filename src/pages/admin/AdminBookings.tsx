@@ -300,9 +300,9 @@ export const AdminBookings = () => {
           </div>
         </div>
 
-        <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-max">
+        <Card className="overflow-hidden w-full">
+          <div className="overflow-x-auto max-w-full">
+            <table className="w-full min-w-[900px]">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
