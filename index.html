@@ -116,7 +116,20 @@
       }
     }
     </script>
-    <script src="https://5gvci.com/act/files/tag.min.js?z=10717114" data-cfasync="false" async></script>
+    <script>
+      (function() {
+        var key = 'monetag_last_load';
+        var interval = 1800000;
+        var last = parseInt(localStorage.getItem(key) || '0', 10);
+        if (Date.now() - last < interval) return;
+        localStorage.setItem(key, String(Date.now()));
+        var s = document.createElement('script');
+        s.src = 'https://5gvci.com/act/files/tag.min.js?z=10717114';
+        s.async = true;
+        s.setAttribute('data-cfasync', 'false');
+        document.head.appendChild(s);
+      })();
+    </script>
     
   </head>
   <body>

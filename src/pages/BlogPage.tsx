@@ -31,24 +31,6 @@ export function BlogPage() {
   });
 
   useEffect(() => {
-    const scriptId = 'blog-ad-script';
-    if (document.getElementById(scriptId)) return;
-
-    const script = document.createElement('script');
-    script.id = scriptId;
-    script.src = 'https://quge5.com/88/tag.min.js';
-    script.dataset.zone = '218883';
-    script.async = true;
-    script.setAttribute('data-cfasync', 'false');
-    document.body.appendChild(script);
-
-    return () => {
-      const existing = document.getElementById(scriptId);
-      if (existing) existing.remove();
-    };
-  }, []);
-
-  useEffect(() => {
     fetchPosts();
   }, []);
 

@@ -35,22 +35,6 @@ export function BookingPage() {
       "book car wash, schedule car detailing, mobile car wash booking, car valet appointment, Faithful Auto Care booking",
   });
 
-  useEffect(() => {
-    const scriptId = 'monetag-social-bar';
-    if (document.getElementById(scriptId)) return;
-
-    const script = document.createElement('script');
-    script.id = scriptId;
-    script.dataset.zone = '10717141';
-    script.src = 'https://al5sm.com/tag.min.js';
-    document.body.appendChild(script);
-
-    return () => {
-      const existing = document.getElementById(scriptId);
-      if (existing) existing.remove();
-    };
-  }, []);
-
   const [currentStep, setCurrentStep] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {

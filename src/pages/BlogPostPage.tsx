@@ -33,7 +33,9 @@ export function BlogPostPage() {
   useEffect(() => {
     const scriptId = 'blogpost-ad-script';
     if (document.getElementById(scriptId)) return;
+    if (sessionStorage.getItem('blogpost_ad_shown')) return;
 
+    sessionStorage.setItem('blogpost_ad_shown', '1');
     const script = document.createElement('script');
     script.id = scriptId;
     script.src = 'https://quge5.com/88/tag.min.js';
