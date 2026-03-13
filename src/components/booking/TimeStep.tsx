@@ -11,14 +11,43 @@ interface TimeStepProps {
   onBack: () => void;
 }
 
-const timeSlots = [
-  '05:00 AM', '05:30 AM', '06:00 AM', '06:30 AM',
-  '07:00 AM', '08:30 AM', '10:00 AM', '12:30 PM',
-  '02:00 PM', '04:00 PM', '05:00 PM', '06:00 PM',
-  '07:00 PM', '08:30 PM', '09:00 PM', '10:00 PM'
-];
+/* Maximum bookings per slot */
+const SLOT_CAPACITY = 2;
 
-export function TimeStep({ selectedTime, selectedDate, onTimeSelect, onNext, onBack }: TimeStepProps) {
+/* Generate time slots dynamically */
+const generateTimeSlots = (startHour: number, endHour: number, interval = 15) => {
+  const slots: string[] = [];
+
+  const date = new Date();
+  date.setHours(startHour, 0, 0, 0);
+
+  const end = new Date();
+  end.setHours(endHour, 0, 0, 0);
+
+  while (date <= end) {
+    const formatted = date.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    slots.push(formatted);
+    date.setMinutes(date.getMinutes() + interval);
+  }
+
+  return slots;
+};
+
+/* Create slots from 5AM → 10PM every 15 minutes */
+const timeSlots = generateTimeSlots(5, 22, 15);
+
+export function TimeStep({
+  selectedTime,
+  selectedDate,
+  onTimeSelect,
+  onNext,
+  onBack,
+}: TimeStepProps) {
   const [localSelectedTime, setLocalSelectedTime] = useState(selectedTime || '');
   const [timeSlotCounts, setTimeSlotCounts] = useState<Record<string, number>>({});
 
@@ -38,9 +67,12 @@ export function TimeStep({ selectedTime, selectedDate, onTimeSelect, onNext, onB
 
     if (!error && data) {
       const counts: Record<string, number> = {};
+
       data.forEach((booking) => {
-        counts[booking.booking_time] = (counts[booking.booking_time] || 0) + 1;
+        counts[booking.booking_time] =
+          (counts[booking.booking_time] || 0) + 1;
       });
+
       setTimeSlotCounts(counts);
     }
   };
@@ -57,19 +89,21 @@ export function TimeStep({ selectedTime, selectedDate, onTimeSelect, onNext, onB
   };
 
   const isTimeBooked = (time: string) => {
-    return (timeSlotCounts[time] || 0) >= 3;
+    return (timeSlotCounts[time] || 0) >= SLOT_CAPACITY;
   };
 
   const getSlotsRemaining = (time: string) => {
     const count = timeSlotCounts[time] || 0;
-    return 3 - count;
+    return SLOT_CAPACITY - count;
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-6">
         <Clock className="w-6 h-6 text-gray-700" />
-        <h3 className="text-xl font-semibold text-gray-900">Select Time</h3>
+        <h3 className="text-xl font-semibold text-gray-900">
+          Select Time
+        </h3>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
@@ -91,13 +125,21 @@ export function TimeStep({ selectedTime, selectedDate, onTimeSelect, onNext, onB
               `}
             >
               <div>{time}</div>
-              {!booked && slotsRemaining < 3 && (
-                <div className={`text-xs mt-1 ${selected ? 'text-blue-100' : 'text-gray-500'}`}>
+
+              {!booked && slotsRemaining < SLOT_CAPACITY && (
+                <div
+                  className={`text-xs mt-1 ${
+                    selected ? 'text-blue-100' : 'text-gray-500'
+                  }`}
+                >
                   {slotsRemaining} {slotsRemaining === 1 ? 'spot' : 'spots'} left
                 </div>
               )}
+
               {booked && (
-                <div className="text-xs mt-1">Full</div>
+                <div className="text-xs mt-1">
+                  Full
+                </div>
               )}
             </button>
           );
@@ -112,6 +154,7 @@ export function TimeStep({ selectedTime, selectedDate, onTimeSelect, onNext, onB
         >
           Back
         </Button>
+
         <Button
           onClick={handleNext}
           disabled={!localSelectedTime}
