@@ -16,6 +16,10 @@ interface Booking {
   service_type: string;
   vehicle_type: string;
   service_price: number;
+  original_price: number | null;
+  discount_amount: number | null;
+  discount_type: string | null;
+  group_id: string | null;
   status: string;
   house_number: string;
   street_name: string;
@@ -387,8 +391,17 @@ export const AdminBookings = () => {
                           </p>
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                        £{booking.service_price}
+                      <td className="whitespace-nowrap px-6 py-4 text-sm">
+                        <span className="font-medium text-gray-900">£{booking.service_price}</span>
+                        {booking.discount_type && (
+                          <span className="block text-xs text-emerald-600 mt-0.5">
+                            {booking.discount_type.includes('multi_car_free') ? 'FREE (5-car deal)' :
+                             booking.discount_type.includes('first_time') ? '15% off' : ''}
+                            {booking.original_price != null && booking.original_price !== booking.service_price && (
+                              <span className="text-gray-400 line-through ml-1">£{booking.original_price}</span>
+                            )}
+                          </span>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4">
                         <span

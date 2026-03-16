@@ -1,21 +1,23 @@
-import { CircleCheck as CheckCircle2, Calendar, Clock, Sparkles, Car, User, Phone } from 'lucide-react';
+import { Calendar, Clock, Sparkles, Car, User, Phone, Tag, Percent } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useNavigate } from 'react-router-dom';
+import type { BookingData } from '../../pages/BookingPage';
 
 interface ConfirmationStepProps {
-  bookingData: {
-    date: string;
-    time: string;
-    serviceType: string;
-    vehicleType: string;
-    customerName: string;
-    customerPhone: string;
-  };
+  bookingData: BookingData;
   bookingId: string;
+  discountInfo?: {
+    isFirstTime: boolean;
+    firstTimeDiscount: number;
+    multiCarDiscount: number;
+    originalTotal: number;
+    finalTotal: number;
+  } | null;
 }
 
-export function ConfirmationStep({ bookingData, bookingId }: ConfirmationStepProps) {
+export function ConfirmationStep({ bookingData, bookingId, discountInfo }: ConfirmationStepProps) {
   const navigate = useNavigate();
+  const cars = bookingData.cars || [];
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -23,9 +25,11 @@ export function ConfirmationStep({ bookingData, bookingId }: ConfirmationStepPro
       weekday: 'long',
       month: 'long',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     });
   };
+
+  const hasDiscount = discountInfo && (discountInfo.multiCarDiscount > 0 || discountInfo.firstTimeDiscount > 0);
 
   return (
     <div className="space-y-8 text-center">
@@ -62,25 +66,83 @@ export function ConfirmationStep({ bookingData, bookingId }: ConfirmationStepPro
             </div>
             <p className="font-semibold text-gray-900">{bookingData.time}</p>
           </div>
+        </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Sparkles className="w-4 h-4" />
-              <span>Service</span>
-            </div>
-            <p className="font-semibold text-gray-900">{bookingData.serviceType}</p>
+        <div className="border-t pt-4">
+          <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
+            <Sparkles className="w-4 h-4" />
+            <span>{cars.length > 1 ? `Vehicles (${cars.length})` : 'Service'}</span>
           </div>
-
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Car className="w-4 h-4" />
-              <span>Vehicle</span>
-            </div>
-            <p className="font-semibold text-gray-900">{bookingData.vehicleType}</p>
+            {cars.map((car, i) => {
+              const isFree = discountInfo && discountInfo.multiCarDiscount > 0 &&
+                car.servicePrice === Math.min(...cars.map(c => c.servicePrice)) &&
+                i === cars.findIndex(c => c.servicePrice === Math.min(...cars.map(x => x.servicePrice)));
+
+              return (
+                <div key={car.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <Car className="w-4 h-4 text-gray-400" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{car.serviceType}</p>
+                      <p className="text-xs text-gray-500">{car.vehicleType}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {isFree && (
+                      <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">FREE</span>
+                    )}
+                    <span className={`text-sm font-semibold ${isFree ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                      £{car.servicePrice}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        <div className="pt-6 border-t border-gray-200">
+        {hasDiscount && discountInfo && (
+          <div className="border-t pt-4 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Subtotal:</span>
+              <span className="font-medium">£{discountInfo.originalTotal}</span>
+            </div>
+            {discountInfo.multiCarDiscount > 0 && (
+              <div className="flex justify-between text-sm text-emerald-600">
+                <span className="flex items-center gap-1">
+                  <Tag className="w-3 h-3" />
+                  Multi-car deal (1 free):
+                </span>
+                <span className="font-medium">-£{discountInfo.multiCarDiscount}</span>
+              </div>
+            )}
+            {discountInfo.isFirstTime && discountInfo.firstTimeDiscount > 0 && (
+              <div className="flex justify-between text-sm text-emerald-600">
+                <span className="flex items-center gap-1">
+                  <Percent className="w-3 h-3" />
+                  First-time discount (15%):
+                </span>
+                <span className="font-medium">-£{discountInfo.firstTimeDiscount.toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between pt-2 border-t text-sm">
+              <span className="font-semibold text-gray-900">Total:</span>
+              <span className="font-bold text-lg text-[#1E90FF]">£{discountInfo.finalTotal.toFixed(2)}</span>
+            </div>
+          </div>
+        )}
+
+        {!hasDiscount && discountInfo && (
+          <div className="border-t pt-4">
+            <div className="flex justify-between text-sm">
+              <span className="font-semibold text-gray-900">Total:</span>
+              <span className="font-bold text-lg text-[#1E90FF]">£{discountInfo.finalTotal.toFixed(2)}</span>
+            </div>
+          </div>
+        )}
+
+        <div className="pt-4 border-t border-gray-200">
           <h3 className="font-semibold text-gray-900 mb-4">Contact Information</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="flex items-center gap-2 text-sm text-gray-600">

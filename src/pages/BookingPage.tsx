@@ -9,16 +9,20 @@ import { FooterSection } from '../sections/FooterSection';
 
 const STORAGE_KEY = 'faithful-booking-draft';
 
-interface BookingData {
-  date: string;
-  time: string;
+export interface CarEntry {
+  id: string;
   serviceType: string;
   servicePrice: number;
   vehicleType: string;
+}
+
+export interface BookingData {
+  date: string;
+  time: string;
+  cars: CarEntry[];
   customerName: string;
   customerEmail: string;
   customerPhone: string;
-  // Address fields
   houseNumber: string;
   streetName: string;
   postCode: string;
@@ -58,6 +62,13 @@ export function BookingPage() {
   });
 
   const [bookingId, setBookingId] = useState<string>('');
+  const [discountInfo, setDiscountInfo] = useState<{
+    isFirstTime: boolean;
+    firstTimeDiscount: number;
+    multiCarDiscount: number;
+    originalTotal: number;
+    finalTotal: number;
+  } | null>(null);
 
   useEffect(() => {
     if (currentStep < 5) {
@@ -129,12 +140,8 @@ export function BookingPage() {
 
           {currentStep === 3 && (
             <ServiceStep
-              selectedService={bookingData.serviceType}
-              selectedVehicle={bookingData.vehicleType}
-              onServiceSelect={(serviceType, servicePrice) =>
-                updateBookingData({ serviceType, servicePrice })
-              }
-              onVehicleSelect={(vehicleType) => updateBookingData({ vehicleType })}
+              cars={bookingData.cars || []}
+              onCarsChange={(cars) => updateBookingData({ cars })}
               onNext={nextStep}
               onBack={prevStep}
             />
@@ -145,14 +152,14 @@ export function BookingPage() {
               customerName={bookingData.customerName}
               customerEmail={bookingData.customerEmail}
               customerPhone={bookingData.customerPhone}
-              // Pass address props
               houseNumber={bookingData.houseNumber}
               streetName={bookingData.streetName}
               postCode={bookingData.postCode}
               city={bookingData.city}
               onDetailsChange={updateBookingData}
-              onNext={(id) => {
+              onNext={(id, discount) => {
                 setBookingId(id);
+                if (discount) setDiscountInfo(discount);
                 clearDraft();
                 nextStep();
               }}
@@ -165,11 +172,10 @@ export function BookingPage() {
             <ConfirmationStep
               bookingData={bookingData as BookingData}
               bookingId={bookingId}
+              discountInfo={discountInfo}
             />
           )}
         </div>
-
-
       </div>
 
       <FooterSection />

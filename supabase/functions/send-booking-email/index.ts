@@ -7,6 +7,20 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+interface CarInfo {
+  serviceType: string;
+  vehicleType: string;
+  servicePrice: number;
+}
+
+interface DiscountInfo {
+  is_first_time: boolean;
+  first_time_discount: number;
+  multi_car_discount: number;
+  original_total: number;
+  final_total: number;
+}
+
 interface BookingData {
   booking_id: string;
   customer_name: string;
@@ -21,6 +35,46 @@ interface BookingData {
   service_type: string;
   service_price: number;
   vehicle_type: string;
+  cars?: CarInfo[];
+  discount_info?: DiscountInfo;
+}
+
+function buildCarRows(cars: CarInfo[], discountInfo?: DiscountInfo): string {
+  const cheapest = Math.min(...cars.map(c => c.servicePrice));
+  let cheapestUsed = false;
+
+  return cars.map((car) => {
+    const isFree = discountInfo && discountInfo.multi_car_discount > 0 && !cheapestUsed && car.servicePrice === cheapest;
+    if (isFree) cheapestUsed = true;
+
+    return `
+      <div class="detail-row">
+        <span class="detail-label">${car.serviceType} (${car.vehicleType})</span>
+        <span class="detail-value">${isFree ? '<span style="color:#059669;font-weight:bold;">FREE</span> <s>&pound;' + car.servicePrice + '</s>' : '&pound;' + car.servicePrice}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function buildDiscountRows(discountInfo: DiscountInfo): string {
+  let html = '';
+  if (discountInfo.multi_car_discount > 0) {
+    html += `
+      <div class="detail-row" style="color:#059669;">
+        <span class="detail-label">Multi-car deal (1 free):</span>
+        <span class="detail-value">-&pound;${discountInfo.multi_car_discount}</span>
+      </div>
+    `;
+  }
+  if (discountInfo.is_first_time && discountInfo.first_time_discount > 0) {
+    html += `
+      <div class="detail-row" style="color:#059669;">
+        <span class="detail-label">First-time discount (15%):</span>
+        <span class="detail-value">-&pound;${discountInfo.first_time_discount.toFixed(2)}</span>
+      </div>
+    `;
+  }
+  return html;
 }
 
 Deno.serve(async (req: Request) => {
@@ -48,6 +102,8 @@ Deno.serve(async (req: Request) => {
       service_type,
       service_price,
       vehicle_type,
+      cars,
+      discount_info,
     } = bookingData;
 
     const fullAddress = `${house_number} ${street_name}, ${city}, ${post_code}`;
@@ -69,90 +125,68 @@ Deno.serve(async (req: Request) => {
       day: 'numeric'
     });
 
+    const isMultiCar = cars && cars.length > 1;
+    const hasDiscount = discount_info && (discount_info.multi_car_discount > 0 || (discount_info.is_first_time && discount_info.first_time_discount > 0));
+    const finalPrice = discount_info ? discount_info.final_total : service_price;
+
+    const serviceSection = isMultiCar && cars
+      ? `
+        <div style="margin-bottom:8px;font-weight:bold;color:#555;">Vehicles (${cars.length}):</div>
+        ${buildCarRows(cars, discount_info)}
+        ${hasDiscount && discount_info ? `
+          <div style="border-top:1px solid #eee;margin-top:8px;padding-top:8px;">
+            <div class="detail-row">
+              <span class="detail-label">Subtotal:</span>
+              <span class="detail-value">&pound;${discount_info.original_total}</span>
+            </div>
+            ${buildDiscountRows(discount_info)}
+          </div>
+        ` : ''}
+        <div class="detail-row" style="border-bottom: none; border-top:2px solid #eee; padding-top:12px;">
+          <span class="detail-label">Total Price:</span>
+          <span class="price">&pound;${Number(finalPrice).toFixed(2)}</span>
+        </div>
+      `
+      : `
+        <div class="detail-row">
+          <span class="detail-label">Service:</span>
+          <span class="detail-value">${service_type}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Vehicle Type:</span>
+          <span class="detail-value">${vehicle_type}</span>
+        </div>
+        ${hasDiscount && discount_info ? `
+          <div class="detail-row" style="color:#059669;">
+            <span class="detail-label">First-time discount (15%):</span>
+            <span class="detail-value">-&pound;${discount_info.first_time_discount.toFixed(2)}</span>
+          </div>
+        ` : ''}
+        <div class="detail-row" style="border-bottom: none;">
+          <span class="detail-label">Total Price:</span>
+          <span class="price">&pound;${Number(finalPrice).toFixed(2)}</span>
+        </div>
+      `;
+
     const emailHtml = `
       <!DOCTYPE html>
       <html>
         <head>
           <style>
-            body {
-              font-family: Arial, sans-serif;
-              line-height: 1.6;
-              color: #333;
-              margin: 0;
-              padding: 0;
-            }
-            .container {
-              max-width: 600px;
-              margin: 0 auto;
-              padding: 20px;
-            }
-            .header {
-              background-color: #CA8A04;
-              color: white;
-              padding: 30px;
-              text-align: center;
-              border-radius: 8px 8px 0 0;
-            }
-            .header h1 {
-              margin: 0 0 8px 0;
-              font-size: 24px;
-            }
-            .header p {
-              margin: 0;
-              opacity: 0.9;
-            }
-            .content {
-              background-color: #f9f9f9;
-              padding: 30px;
-              border: 1px solid #ddd;
-              border-top: none;
-            }
-            .booking-details {
-              background-color: white;
-              padding: 20px;
-              border-radius: 8px;
-              margin: 20px 0;
-            }
-            .detail-row {
-              display: flex;
-              justify-content: space-between;
-              padding: 10px 0;
-              border-bottom: 1px solid #eee;
-            }
-            .detail-row:last-child {
-              border-bottom: none;
-            }
-            .detail-label {
-              font-weight: bold;
-              color: #555;
-            }
-            .detail-value {
-              color: #333;
-            }
-            .status-badge {
-              display: inline-block;
-              padding: 6px 16px;
-              background-color: #CA8A04;
-              color: white;
-              border-radius: 20px;
-              font-size: 14px;
-              font-weight: bold;
-            }
-            .footer {
-              text-align: center;
-              padding: 20px;
-              color: #666;
-              font-size: 14px;
-              border: 1px solid #ddd;
-              border-top: none;
-              border-radius: 0 0 8px 8px;
-              background: #fafafa;
-            }
-            .price {
-              font-size: 24px;
-              font-weight: bold;
-              color: #CA8A04;
-            }
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #CA8A04; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+            .header h1 { margin: 0 0 8px 0; font-size: 24px; }
+            .header p { margin: 0; opacity: 0.9; }
+            .content { background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-top: none; }
+            .booking-details { background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+            .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+            .detail-row:last-child { border-bottom: none; }
+            .detail-label { font-weight: bold; color: #555; }
+            .detail-value { color: #333; }
+            .status-badge { display: inline-block; padding: 6px 16px; background-color: #CA8A04; color: white; border-radius: 20px; font-size: 14px; font-weight: bold; }
+            .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; background: #fafafa; }
+            .price { font-size: 24px; font-weight: bold; color: #CA8A04; }
           </style>
         </head>
         <body>
@@ -174,14 +208,7 @@ Deno.serve(async (req: Request) => {
                   <span class="detail-label">Booking ID:</span>
                   <span class="detail-value">${booking_id}</span>
                 </div>
-                <div class="detail-row">
-                  <span class="detail-label">Service:</span>
-                  <span class="detail-value">${service_type}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Vehicle Type:</span>
-                  <span class="detail-value">${vehicle_type}</span>
-                </div>
+                ${serviceSection}
                 <div class="detail-row">
                   <span class="detail-label">Date:</span>
                   <span class="detail-value">${formattedDate}</span>
@@ -193,10 +220,6 @@ Deno.serve(async (req: Request) => {
                 <div class="detail-row">
                   <span class="detail-label">Address:</span>
                   <span class="detail-value">${fullAddress}</span>
-                </div>
-                <div class="detail-row" style="border-bottom: none;">
-                  <span class="detail-label">Total Price:</span>
-                  <span class="price">&pound;${service_price}</span>
                 </div>
               </div>
 
@@ -237,7 +260,7 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         from: "Faithful Auto Care <noreply@faithfulautocare.uk>",
         to: [customer_email],
-        subject: `Booking Received - ${service_type} - ${formattedDate}`,
+        subject: `Booking Received - ${isMultiCar ? `${cars!.length} Cars` : service_type} - ${formattedDate}`,
         html: emailHtml,
       }),
     });
@@ -257,72 +280,50 @@ Deno.serve(async (req: Request) => {
       .eq('receive_new_bookings', true);
 
     if (admins && admins.length > 0) {
+      const adminServiceSection = isMultiCar && cars
+        ? cars.map(car => `
+            <div class="detail-row">
+              <span class="detail-label">${car.serviceType} (${car.vehicleType}):</span>
+              <span class="detail-value">&pound;${car.servicePrice}</span>
+            </div>
+          `).join('')
+        : `
+          <div class="detail-row">
+            <span class="detail-label">Service:</span>
+            <span class="detail-value"><span class="badge">${service_type}</span></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Vehicle Type:</span>
+            <span class="detail-value">${vehicle_type}</span>
+          </div>
+        `;
+
+      const discountSection = hasDiscount && discount_info ? `
+        <div class="detail-row" style="color:#059669;">
+          <span class="detail-label">Discounts Applied:</span>
+          <span class="detail-value">
+            ${discount_info.multi_car_discount > 0 ? `Multi-car: -&pound;${discount_info.multi_car_discount}` : ''}
+            ${discount_info.is_first_time && discount_info.first_time_discount > 0 ? ` First-time: -&pound;${discount_info.first_time_discount.toFixed(2)}` : ''}
+          </span>
+        </div>
+      ` : '';
+
       const adminEmailHtml = `
         <!DOCTYPE html>
         <html>
           <head>
             <style>
-              body {
-                font-family: Arial, sans-serif;
-                line-height: 1.6;
-                color: #333;
-              }
-              .container {
-                max-width: 600px;
-                margin: 0 auto;
-                padding: 20px;
-              }
-              .header {
-                background-color: #CA8A04;
-                color: white;
-                padding: 30px;
-                text-align: center;
-                border-radius: 8px 8px 0 0;
-              }
-              .content {
-                background-color: #f9f9f9;
-                padding: 30px;
-                border: 1px solid #ddd;
-              }
-              .booking-details {
-                background-color: white;
-                padding: 20px;
-                border-radius: 8px;
-                margin: 20px 0;
-              }
-              .detail-row {
-                display: flex;
-                justify-content: space-between;
-                padding: 10px 0;
-                border-bottom: 1px solid #eee;
-              }
-              .detail-label {
-                font-weight: bold;
-                color: #555;
-              }
-              .detail-value {
-                color: #333;
-              }
-              .footer {
-                text-align: center;
-                padding: 20px;
-                color: #666;
-                font-size: 14px;
-              }
-              .price {
-                font-size: 24px;
-                font-weight: bold;
-                color: #CA8A04;
-              }
-              .badge {
-                display: inline-block;
-                padding: 5px 10px;
-                background-color: #CA8A04;
-                color: white;
-                border-radius: 4px;
-                font-size: 12px;
-                font-weight: bold;
-              }
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background-color: #CA8A04; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+              .content { background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; }
+              .booking-details { background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+              .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+              .detail-label { font-weight: bold; color: #555; }
+              .detail-value { color: #333; }
+              .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+              .price { font-size: 24px; font-weight: bold; color: #CA8A04; }
+              .badge { display: inline-block; padding: 5px 10px; background-color: #CA8A04; color: white; border-radius: 4px; font-size: 12px; font-weight: bold; }
             </style>
           </head>
           <body>
@@ -333,7 +334,6 @@ Deno.serve(async (req: Request) => {
               </div>
               <div class="content">
                 <p><strong>Booking Details:</strong></p>
-
                 <div class="booking-details">
                   <div class="detail-row">
                     <span class="detail-label">Booking ID:</span>
@@ -355,14 +355,8 @@ Deno.serve(async (req: Request) => {
                     <span class="detail-label">Address:</span>
                     <span class="detail-value">${fullAddress}</span>
                   </div>
-                  <div class="detail-row">
-                    <span class="detail-label">Service:</span>
-                    <span class="detail-value"><span class="badge">${service_type}</span></span>
-                  </div>
-                  <div class="detail-row">
-                    <span class="detail-label">Vehicle Type:</span>
-                    <span class="detail-value">${vehicle_type}</span>
-                  </div>
+                  ${adminServiceSection}
+                  ${discountSection}
                   <div class="detail-row">
                     <span class="detail-label">Date:</span>
                     <span class="detail-value">${formattedDate}</span>
@@ -372,8 +366,8 @@ Deno.serve(async (req: Request) => {
                     <span class="detail-value"><strong>${booking_time}</strong></span>
                   </div>
                   <div class="detail-row" style="border-bottom: none;">
-                    <span class="detail-label">Service Price:</span>
-                    <span class="price">&pound;${service_price}</span>
+                    <span class="detail-label">Total Price:</span>
+                    <span class="price">&pound;${Number(finalPrice).toFixed(2)}</span>
                   </div>
                 </div>
 
@@ -405,7 +399,7 @@ Deno.serve(async (req: Request) => {
         body: JSON.stringify({
           from: "Faithful Auto Care <noreply@faithfulautocare.uk>",
           to: adminEmails,
-          subject: `New Booking Pending: ${service_type} - ${formattedDate} at ${booking_time}`,
+          subject: `New Booking Pending: ${isMultiCar ? `${cars!.length} Cars` : service_type} - ${formattedDate} at ${booking_time}`,
           html: adminEmailHtml,
         }),
       });
