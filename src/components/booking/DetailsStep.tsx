@@ -152,11 +152,11 @@ export function DetailsStep({
       }
 
       const groupId = crypto.randomUUID();
-      const bookingCode = generateBookingCode();
+      const primaryBookingCode = generateBookingCode();
       const cheapestPrice = cars.length >= 5 ? Math.min(...cars.map(c => c.servicePrice)) : 0;
       let cheapestUsed = false;
 
-      const bookingRows = cars.map((car) => {
+      const bookingRows = cars.map((car, index) => {
         let discountAmount = 0;
         let discountType: string | null = null;
 
@@ -178,7 +178,7 @@ export function DetailsStep({
         const finalPrice = Math.max(0, Math.round((car.servicePrice - discountAmount) * 100) / 100);
 
         return {
-          booking_code: bookingCode,
+          booking_code: index === 0 ? primaryBookingCode : generateBookingCode(),
           group_id: cars.length > 1 ? groupId : null,
           booking_date: bookingData.date,
           booking_time: bookingData.time,
@@ -240,7 +240,7 @@ export function DetailsStep({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          booking_id: bookingCode,
+          booking_id: primaryBookingCode,
           customer_name: name,
           customer_email: email,
           customer_phone: phone,
@@ -277,7 +277,7 @@ export function DetailsStep({
         postCode: postcode,
         city: town,
       });
-      onNext(bookingCode, discount);
+      onNext(primaryBookingCode, discount);
     } catch (err) {
       setError('Failed to create booking. Please try again.');
       console.error('Booking error:', err);
