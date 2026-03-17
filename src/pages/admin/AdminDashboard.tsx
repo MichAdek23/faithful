@@ -4,7 +4,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { Calendar, Euro, Users, TrendingUp, TriangleAlert as AlertTriangle, Clock, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Star, Phone, X } from "lucide-react";
+import { Calendar, Euro, Users, TrendingUp, TriangleAlert as AlertTriangle, Clock, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Star, Phone, X, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface Stats {
@@ -31,6 +31,12 @@ interface Booking {
   customer_phone: string;
   booking_date: string;
   customer_email: string;
+}
+
+interface MaintenanceStats {
+  activeSubscribers: number;
+  monthlyRecurring: number;
+  subscribers: { name: string; email: string; phone: string; date: string }[];
 }
 
 interface DailyAnalytics {
@@ -76,17 +82,24 @@ export const AdminDashboard = () => {
     avgBookingsPerDay: 0,
     avgRevenuePerDay: 0,
   });
+  const [maintenanceStats, setMaintenanceStats] = useState<MaintenanceStats>({
+    activeSubscribers: 0,
+    monthlyRecurring: 0,
+    subscribers: [],
+  });
 
   useEffect(() => {
     fetchDashboardData();
     fetchWeeklyAnalytics();
     fetchPendingReviews();
+    fetchMaintenanceStats();
 
     const bookingsSubscription = supabase
       .channel('dashboard-bookings')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => {
         fetchDashboardData();
         fetchWeeklyAnalytics();
+        fetchMaintenanceStats();
       })
       .subscribe();
 
@@ -267,6 +280,41 @@ export const AdminDashboard = () => {
     }
   };
 
+  const fetchMaintenanceStats = async () => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const { data: maintenanceBookings } = await supabase
+      .from("bookings")
+      .select("customer_name, customer_email, customer_phone, booking_date, service_price")
+      .ilike("service_type", "Maintenance Plan%")
+      .gte("booking_date", thirtyDaysAgo.toISOString().split('T')[0])
+      .order("booking_date", { ascending: false });
+
+    if (maintenanceBookings) {
+      const uniqueEmails = new Set<string>();
+      const subscribers: MaintenanceStats["subscribers"] = [];
+
+      for (const b of maintenanceBookings) {
+        if (!uniqueEmails.has(b.customer_email)) {
+          uniqueEmails.add(b.customer_email);
+          subscribers.push({
+            name: b.customer_name,
+            email: b.customer_email,
+            phone: b.customer_phone,
+            date: b.booking_date,
+          });
+        }
+      }
+
+      setMaintenanceStats({
+        activeSubscribers: subscribers.length,
+        monthlyRecurring: subscribers.length * 45,
+        subscribers: subscribers.slice(0, 5),
+      });
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-4 md:space-y-6">
@@ -302,7 +350,7 @@ export const AdminDashboard = () => {
 
         <p className="text-sm md:text-base text-gray-600">Welcome back! Here is your business review</p>
 
-        <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-5">
           <Card className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -344,6 +392,21 @@ export const AdminDashboard = () => {
               </div>
               <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-blue-100">
                 <Users className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Maintenance Plan</p>
+                <p className="mt-2 text-2xl sm:text-3xl font-bold text-gray-900">{maintenanceStats.activeSubscribers}</p>
+                <p className="mt-1 text-xs sm:text-sm text-gray-500">
+                  £{maintenanceStats.monthlyRecurring}/mo recurring
+                </p>
+              </div>
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-teal-100">
+                <RefreshCw className="h-5 w-5 sm:h-6 sm:w-6 text-teal-600" />
               </div>
             </div>
           </Card>
@@ -642,6 +705,33 @@ export const AdminDashboard = () => {
                 <p className="mt-2 text-4xl font-bold text-gray-900">{stats.satisfaction.toFixed(1)}/5</p>
                 <p className="mt-1 text-sm text-green-600">+0.2% (30 days)</p>
               </div>
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-100">
+                  <RefreshCw className="h-5 w-5 text-teal-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 text-sm">Maintenance Subscribers</h3>
+                  <p className="text-xs text-gray-500">Active in last 30 days</p>
+                </div>
+              </div>
+              {maintenanceStats.subscribers.length > 0 ? (
+                <div className="space-y-3">
+                  {maintenanceStats.subscribers.map((sub, i) => (
+                    <div key={i} className="flex items-center justify-between text-sm border-b last:border-0 pb-2 last:pb-0">
+                      <div>
+                        <p className="font-medium text-gray-900">{sub.name}</p>
+                        <p className="text-xs text-gray-500">{sub.email}</p>
+                      </div>
+                      <span className="text-xs text-teal-600 font-medium">£45/mo</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-4">No active subscribers yet</p>
+              )}
             </Card>
           </div>
         </div>
