@@ -1,4 +1,4 @@
-import { Droplets, Car, Sparkles } from "lucide-react";
+import { Droplets, Car, Sparkles, Shield, RefreshCcw } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 export const ServicesSection = () => {
@@ -7,28 +7,44 @@ export const ServicesSection = () => {
   const services = [
     {
       icon: Droplets,
-      title: "Basic Refresh Package",
+      title: "Basic Package",
       description:
-        "A quick, focused clean — interior OR exterior. We vacuum, wipe the dashboard, console and doors, or wash, rinse and polish the exterior including windows and alloy wheels. From £35.",
+        "A quick and affordable refresh. Choose between interior or exterior cleaning. Interior includes vacuum and surface wipe, while exterior covers wash, polish, windows and alloy wheels. Includes paint sealant. From £25.",
       image:
         "https://images.pexels.com/photos/6873088/pexels-photo-6873088.jpeg?auto=compress&cs=tinysrgb&w=600",
     },
     {
       icon: Car,
-      title: "Premium Package",
+      title: "Standard Package",
       description:
-        "Our most popular full interior and exterior valet. Seat shampooing, window cleaning, dashboard wipe, exterior wash, shampoo, polish and alloy wheel cleaning. From £70.",
+        "A complete interior and exterior clean for everyday freshness. Includes vacuuming, dashboard wipe, window cleaning and full exterior wash. Ideal for routine maintenance. From £40.",
       image:
         "https://images.pexels.com/photos/4489749/pexels-photo-4489749.jpeg?auto=compress&cs=tinysrgb&w=600",
+    },
+    {
+      icon: Shield,
+      title: "Premium Package",
+      description:
+        "Enhanced cleaning with added paint protection. Includes everything in the Standard Package plus a protective sealant to preserve your vehicle’s shine and finish. From £55.",
+      image:
+        "https://images.pexels.com/photos/3807316/pexels-photo-3807316.jpeg?auto=compress&cs=tinysrgb&w=600",
     },
     {
       icon: Sparkles,
       title: "Ultimate Package",
       description:
-        "Our most comprehensive deep clean to return your vehicle to showroom standard. Includes everything in Premium plus deep seat cleaning, stain remover treatment and more. From £155.",
+        "Our most comprehensive deep clean. Includes full interior and exterior detailing, stain removal, and deep surface cleaning to restore your car to near showroom condition. From £120.",
       image:
         "https://images.pexels.com/photos/5288707/pexels-photo-5288707.jpeg?auto=compress&cs=tinysrgb&w=600",
-    }
+    },
+    {
+      icon: RefreshCcw,
+      title: "Maintenance Plan",
+      description:
+        "Monthly premium care to keep your car in top condition all year. Includes full interior and exterior cleaning with paint protection. Requires one Premium Package before signup. £45/month.",
+      image:
+        "https://images.pexels.com/photos/3806249/pexels-photo-3806249.jpeg?auto=compress&cs=tinysrgb&w=600",
+    },
   ];
 
   return (
