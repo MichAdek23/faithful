@@ -1,4 +1,4 @@
-import { Calendar, Clock, Sparkles, Car, User, Phone, Tag, Percent, Mail, MapPin, Home } from 'lucide-react';
+import { Calendar, Clock, Sparkles, Car, User, Phone, Tag, Percent, Mail, MapPin, Chrome as Home } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useNavigate } from 'react-router-dom';
 import type { BookingData, DiscountInfo } from '../../pages/BookingPage';
@@ -204,7 +204,10 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-3 pt-4">
         <Button
-          onClick={() => navigate('/book-now')}
+          onClick={() => {
+            localStorage.removeItem('faithful-booking-draft');
+            window.location.href = '/book-now';
+          }}
           className="flex-1 h-12 bg-[#1E90FF] hover:bg-[#1873CC] text-white"
         >
           Book Another Appointment
