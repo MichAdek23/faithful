@@ -109,18 +109,22 @@ export const AdminDashboard = () => {
   }, [dateFilter]);
 
   const getDateRange = () => {
-    const today = new Date();
-    const startOfToday = new Date(today.setHours(0, 0, 0, 0));
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     if (dateFilter === "today") {
-      return { start: startOfToday.toISOString().split('T')[0], end: startOfToday.toISOString().split('T')[0] };
+      const d = today.toISOString().split('T')[0];
+      return { start: d, end: d };
     } else if (dateFilter === "week") {
       const startOfWeek = new Date(today);
       startOfWeek.setDate(today.getDate() - 6);
-      return { start: startOfWeek.toISOString().split('T')[0], end: new Date().toISOString().split('T')[0] };
+      const endOfWeek = new Date(today);
+      endOfWeek.setDate(today.getDate() + 6);
+      return { start: startOfWeek.toISOString().split('T')[0], end: endOfWeek.toISOString().split('T')[0] };
     } else {
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      return { start: startOfMonth.toISOString().split('T')[0], end: new Date().toISOString().split('T')[0] };
+      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      return { start: startOfMonth.toISOString().split('T')[0], end: endOfMonth.toISOString().split('T')[0] };
     }
   };
 
