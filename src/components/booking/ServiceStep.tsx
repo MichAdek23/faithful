@@ -1,8 +1,5 @@
 import { useState } from 'react';
-import { 
-  Droplet, Sparkles, Gem, Plus, Trash2, Gift, Calendar, Star, 
-  Tag, Percent, CreditCard, CheckCircle 
-} from 'lucide-react';
+import { Droplet, Sparkles, Gem, Plus, Trash2, Gift, Calendar, Star, Tag, Percent, CreditCard, CircleCheck as CheckCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { supabase } from '../../lib/supabase';
 import type { CarEntry, BookingData } from '../../pages/BookingPage';
@@ -88,30 +85,29 @@ const generateBookingCode = (): string => {
   return Math.floor(10000000 + Math.random() * 90000000).toString();
 };
 
-// Mock function to check if user had Premium in last 30 days
-// In production, this would check against your backend/database
 const hasRecentPremiumService = async (email?: string, phone?: string): Promise<boolean> => {
   if (!email && !phone) return false;
-  
-  // This is a mock implementation - replace with actual API call
-  // For demo purposes, let's say user with email "test@example.com" is eligible
-  if (email === 'test@example.com') return true;
-  
-  // In production, you would query your database:
-  // const thirtyDaysAgo = new Date();
-  // thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  // 
-  // const { data } = await supabase
-  //   .from('bookings')
-  //   .select('id')
-  //   .eq('customer_email', email)
-  //   .eq('service_type', 'Premium Package – £55')
-  //   .gte('created_at', thirtyDaysAgo.toISOString())
-  //   .limit(1);
-  // 
-  // return (data && data.length > 0);
-  
-  return false;
+
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  let query = supabase
+    .from('bookings')
+    .select('id')
+    .ilike('service_type', 'Premium Package%')
+    .gte('booking_date', thirtyDaysAgo.toISOString().split('T')[0])
+    .limit(1);
+
+  if (email && phone) {
+    query = query.or(`customer_email.eq.${email},customer_phone.eq.${phone}`);
+  } else if (email) {
+    query = query.eq('customer_email', email);
+  } else {
+    query = query.eq('customer_phone', phone!);
+  }
+
+  const { data } = await query;
+  return (data && data.length > 0);
 };
 
 function calculateDiscounts(cars: CarEntry[], isFirstTime: boolean): DiscountInfo {
