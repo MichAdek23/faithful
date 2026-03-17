@@ -30,7 +30,6 @@ import AdminForgotPassword from "./pages/admin/auth/AdminForgotPassword";
 import AdminResetPassword from "./pages/admin/auth/AdminResetPassword";
 import { AdminAuthProvider } from "./contexts/AdminAuthContext";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
-import { AdBanner } from "./components/AdBanner";
 import { BlogPage } from "./pages/BlogPage";
 import { BlogPostPage } from "./pages/BlogPostPage";
 import { AdminBlog } from "./pages/admin/AdminBlog";
@@ -58,7 +57,6 @@ function HomePage() {
       <StatisticsSection />
       <ReviewsSection />
       <FAQSection />
-      <AdBanner className="max-w-5xl mx-auto px-4 py-6" />
       <FooterSection />
     </div>
   );
