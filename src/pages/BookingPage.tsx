@@ -29,6 +29,14 @@ export interface BookingData {
   city: string;
 }
 
+export interface DiscountInfo {
+  isFirstTime: boolean;
+  firstTimeDiscount: number;
+  multiCarDiscount: number;
+  originalTotal: number;
+  finalTotal: number;
+}
+
 export function BookingPage() {
   useSEO({
     title: "Book Your Car Wash",
@@ -39,7 +47,7 @@ export function BookingPage() {
       "book car wash, schedule car detailing, mobile car wash booking, car valet appointment, Faithful Auto Care booking",
   });
 
-  const [currentStep, setCurrentStep] = useState(() => {
+  const [currentStep, setCurrentStep] = useState<number>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
@@ -62,13 +70,7 @@ export function BookingPage() {
   });
 
   const [bookingId, setBookingId] = useState<string>('');
-  const [discountInfo, setDiscountInfo] = useState<{
-    isFirstTime: boolean;
-    firstTimeDiscount: number;
-    multiCarDiscount: number;
-    originalTotal: number;
-    finalTotal: number;
-  } | null>(null);
+  const [discountInfo, setDiscountInfo] = useState<DiscountInfo | null>(null);
 
   useEffect(() => {
     if (currentStep < 5) {
@@ -84,13 +86,24 @@ export function BookingPage() {
     setBookingData(prev => ({ ...prev, ...data }));
   };
 
-  const nextStep = () => {
-    setCurrentStep(prev => prev + 1);
+  const nextStep = (): void => {
+    setCurrentStep((prev: number) => prev + 1);
     window.scrollTo(0, 0);
   };
-  const prevStep = () => {
-    setCurrentStep(prev => prev - 1);
+  
+  const prevStep = (): void => {
+    setCurrentStep((prev: number) => prev - 1);
     window.scrollTo(0, 0);
+  };
+
+  // Handle booking completion from ServiceStep
+  const handleBookingComplete = (id: string, discount?: DiscountInfo): void => {
+    setBookingId(id);
+    if (discount) {
+      setDiscountInfo(discount);
+    }
+    clearDraft();
+    nextStep();
   };
 
   return (
@@ -115,15 +128,15 @@ export function BookingPage() {
             <div className={`flex-1 h-0.5 sm:h-1 mx-1 sm:mx-2 ${currentStep >= 2 ? 'bg-[#1E90FF]' : 'bg-gray-200'}`} />
             <StepIndicator step={2} label="Time" active={currentStep >= 2} />
             <div className={`flex-1 h-0.5 sm:h-1 mx-1 sm:mx-2 ${currentStep >= 3 ? 'bg-[#1E90FF]' : 'bg-gray-200'}`} />
-            <StepIndicator step={3} label="Service" active={currentStep >= 3} />
+            <StepIndicator step={3} label="Details" active={currentStep >= 3} />
             <div className={`flex-1 h-0.5 sm:h-1 mx-1 sm:mx-2 ${currentStep >= 4 ? 'bg-[#1E90FF]' : 'bg-gray-200'}`} />
-            <StepIndicator step={4} label="Details" active={currentStep >= 4} />
+            <StepIndicator step={4} label="Service" active={currentStep >= 4} />
           </div>
 
           {currentStep === 1 && (
             <DateStep
               selectedDate={bookingData.date}
-              onDateSelect={(date) => updateBookingData({ date })}
+              onDateSelect={(date: string) => updateBookingData({ date })}
               onNext={nextStep}
             />
           )}
@@ -132,22 +145,13 @@ export function BookingPage() {
             <TimeStep
               selectedTime={bookingData.time}
               selectedDate={bookingData.date}
-              onTimeSelect={(time) => updateBookingData({ time })}
+              onTimeSelect={(time: string) => updateBookingData({ time })}
               onNext={nextStep}
               onBack={prevStep}
             />
           )}
 
           {currentStep === 3 && (
-            <ServiceStep
-              cars={bookingData.cars || []}
-              onCarsChange={(cars) => updateBookingData({ cars })}
-              onNext={nextStep}
-              onBack={prevStep}
-            />
-          )}
-
-          {currentStep === 4 && (
             <DetailsStep
               customerName={bookingData.customerName}
               customerEmail={bookingData.customerEmail}
@@ -157,13 +161,20 @@ export function BookingPage() {
               postCode={bookingData.postCode}
               city={bookingData.city}
               onDetailsChange={updateBookingData}
-              onNext={(id, discount) => {
-                setBookingId(id);
-                if (discount) setDiscountInfo(discount);
-                clearDraft();
-                nextStep();
-              }}
+              onNext={() => nextStep()}
               onBack={prevStep}
+              bookingData={bookingData as BookingData}
+            />
+          )}
+
+          {currentStep === 4 && (
+            <ServiceStep
+              cars={bookingData.cars || []}
+              onCarsChange={(cars: CarEntry[]) => updateBookingData({ cars })}
+              onNext={handleBookingComplete}
+              onBack={prevStep}
+              userEmail={bookingData.customerEmail}
+              userPhone={bookingData.customerPhone}
               bookingData={bookingData as BookingData}
             />
           )}

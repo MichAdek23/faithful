@@ -51,6 +51,7 @@ export const ServicesSection = () => {
     <section id="services" className="py-16 sm:py-20 bg-white">
       <div className="container mx-auto px-4 sm:px-6">
 
+        {/* Title */}
         <div
           ref={titleRef}
           className={`text-center mb-12 transition-all duration-700 ${
@@ -68,7 +69,8 @@ export const ServicesSection = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
+        {/* Grid */}
+        <div className="grid gap-6 sm:gap-8 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))] justify-items-center">
           {services.map((service, index) => {
             const ServiceCard = () => {
               const { ref, isVisible } = useScrollAnimation();
@@ -76,13 +78,14 @@ export const ServicesSection = () => {
               return (
                 <div
                   ref={ref}
-                  className={`bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-700 hover:scale-105 ${
+                  className={`w-full max-w-sm bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-700 hover:scale-105 ${
                     isVisible
                       ? "opacity-100 scale-100"
                       : "opacity-0 scale-95"
                   }`}
                   style={{ transitionDelay: `${index * 100}ms` }}
                 >
+                  {/* Image */}
                   <div className="relative h-48 sm:h-56">
                     <img
                       src={service.image}
@@ -95,6 +98,7 @@ export const ServicesSection = () => {
                     </div>
                   </div>
 
+                  {/* Content */}
                   <div className="p-5 sm:p-6">
                     <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3">
                       {service.title}
