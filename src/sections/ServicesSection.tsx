@@ -27,7 +27,7 @@ export const ServicesSection = () => {
       description:
         "Enhanced cleaning with added paint protection. Includes everything in the Standard Package plus a protective sealant to preserve your vehicle’s shine and finish. From £55.",
       image:
-        "https://images.pexels.com/photos/3807316/pexels-photo-3807316.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "https://images.pexels.com/photos/6873090/pexels-photo-6873090.jpeg?auto=compress&cs=tinysrgb&w=600",
     },
     {
       icon: Sparkles,
@@ -43,8 +43,8 @@ export const ServicesSection = () => {
       description:
         "Monthly premium care to keep your car in top condition all year. Includes full interior and exterior cleaning with paint protection. Requires one Premium Package before signup. £45/month.",
       image:
-        "https://images.pexels.com/photos/3806249/pexels-photo-3806249.jpeg?auto=compress&cs=tinysrgb&w=600",
-    },
+        "https://images.pexels.com/photos/6873086/pexels-photo-6873086.jpeg?auto=compress&cs=tinysrgb&w=600"
+    }
   ];
 
   return (
@@ -69,51 +69,101 @@ export const ServicesSection = () => {
           </p>
         </div>
 
-        {/* Grid */}
-        <div className="grid gap-6 sm:gap-8 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))] justify-items-center">
-          {services.map((service, index) => {
-            const ServiceCard = () => {
-              const { ref, isVisible } = useScrollAnimation();
+        {/* Grid - Custom layout for 5 cards: 3 on top, 2 on bottom */}
+        <div className="flex flex-col items-center gap-6 sm:gap-8">
+          {/* First row - 3 cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 w-full max-w-6xl">
+            {services.slice(0, 3).map((service, index) => {
+              const ServiceCard = () => {
+                const { ref, isVisible } = useScrollAnimation();
 
-              return (
-                <div
-                  ref={ref}
-                  className={`w-full max-w-sm bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-700 hover:scale-105 ${
-                    isVisible
-                      ? "opacity-100 scale-100"
-                      : "opacity-0 scale-95"
-                  }`}
-                  style={{ transitionDelay: `${index * 100}ms` }}
-                >
-                  {/* Image */}
-                  <div className="relative h-48 sm:h-56">
-                    <img
-                      src={service.image}
-                      alt={service.title}
-                      className="w-full h-full object-cover"
-                    />
+                return (
+                  <div
+                    ref={ref}
+                    className={`w-full bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-700 hover:scale-105 ${
+                      isVisible
+                        ? "opacity-100 scale-100"
+                        : "opacity-0 scale-95"
+                    }`}
+                    style={{ transitionDelay: `${index * 100}ms` }}
+                  >
+                    {/* Image */}
+                    <div className="relative h-48 sm:h-56">
+                      <img
+                        src={service.image}
+                        alt={service.title}
+                        className="w-full h-full object-cover"
+                      />
 
-                    <div className="absolute bottom-4 right-4 w-12 h-12 sm:w-14 sm:h-14 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
-                      <service.icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                      <div className="absolute bottom-4 right-4 w-12 h-12 sm:w-14 sm:h-14 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                        <service.icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-5 sm:p-6">
+                      <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3">
+                        {service.title}
+                      </h3>
+
+                      <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                        {service.description}
+                      </p>
                     </div>
                   </div>
+                );
+              };
 
-                  {/* Content */}
-                  <div className="p-5 sm:p-6">
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3">
-                      {service.title}
-                    </h3>
+              return <ServiceCard key={index} />;
+            })}
+          </div>
 
-                    <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                      {service.description}
-                    </p>
+          {/* Second row - 2 cards centered */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 w-full max-w-4xl">
+            {services.slice(3, 5).map((service, index) => {
+              const ServiceCard = () => {
+                const { ref, isVisible } = useScrollAnimation();
+
+                return (
+                  <div
+                    ref={ref}
+                    className={`w-full bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-700 hover:scale-105 ${
+                      isVisible
+                        ? "opacity-100 scale-100"
+                        : "opacity-0 scale-95"
+                    }`}
+                    style={{ transitionDelay: `${(index + 3) * 100}ms` }}
+                  >
+                    {/* Image */}
+                    <div className="relative h-48 sm:h-56">
+                      <img
+                        src={service.image}
+                        alt={service.title}
+                        className="w-full h-full object-cover"
+                      />
+
+                      <div className="absolute bottom-4 right-4 w-12 h-12 sm:w-14 sm:h-14 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                        <service.icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-5 sm:p-6">
+                      <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3">
+                        {service.title}
+                      </h3>
+
+                      <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                        {service.description}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              );
-            };
+                );
+              };
 
-            return <ServiceCard key={index} />;
-          })}
+              return <ServiceCard key={index + 3} />;
+            })}
+          </div>
         </div>
       </div>
     </section>
