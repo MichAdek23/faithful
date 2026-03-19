@@ -26,7 +26,7 @@ export const ServicesSection = () => {
       description:
         "Enhanced cleaning with added paint protection. Includes everything in the Standard Package plus a protective sealant to preserve your vehicle’s shine and finish. From £55.",
       image:
-        "https://images.pexels.com/photos/6873090/pexels-photo-6873090.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "/interior.jpeg",
     },
     {
       icon: Sparkles,

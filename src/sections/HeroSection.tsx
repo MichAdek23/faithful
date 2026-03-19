@@ -1,11 +1,28 @@
 import { MessageCircle, Phone, Menu, X, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export const HeroSection = () => {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Array of your 4 images
+  const heroImages = [
+    '/LandingPage1.png',
+    '/bikeAgain.jpeg',
+    '/tires.jpeg',
+    '/cleaning.jpeg'
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
+    }, 5000); // Change image every 5 seconds for smoother viewing
+
+    return () => clearInterval(interval);
+  }, []);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -75,12 +92,7 @@ export const HeroSection = () => {
               >
                 My Bookings
               </li>
-              <li
-                className="cursor-pointer hover:text-blue-600 transition"
-                onClick={() => navigate("/blog")}
-              >
-                Blog
-              </li>
+              
             </ul>
 
             <div className="flex items-center gap-2 sm:gap-3">
@@ -161,15 +173,7 @@ export const HeroSection = () => {
                 >
                   My Bookings
                 </li>
-                <li
-                  className="cursor-pointer hover:bg-blue-50 px-6 py-4 border-b"
-                  onClick={() => {
-                    navigate("/blog");
-                    setIsMobileMenuOpen(false);
-                  }}
-                >
-                  Blog
-                </li>
+                
 
                 <li className="px-6 py-4 space-y-3">
                   <Button
@@ -178,7 +182,7 @@ export const HeroSection = () => {
                     }
                     className="w-full rounded-full bg-blue-600 text-white"
                   >
-                    <MessageCircle className="w-4 h-4 mr-2" /> Chat with us
+                    <MessageCircle className="w-4 h-4 mr-2" /> Chat us
                   </Button>
 
                   <Button
@@ -199,11 +203,25 @@ export const HeroSection = () => {
         className="relative flex min-h-[100svh] w-full max-w-[100vw] items-center overflow-hidden"
       >
         <div className="absolute inset-0 overflow-hidden">
-          <img
-            src="/LandingPage1.png"
-            alt="Car wash background"
-            className="w-full h-full object-cover md:blur-[2px] blur-md lg:blur-0"
-          />
+          {/* Smooth crossfade container */}
+          <div className="relative w-full h-full">
+            {heroImages.map((src, index) => (
+              <div
+                key={src}
+                className={`absolute inset-0 transition-opacity duration-1500 ease-in-out`}
+                style={{
+                  opacity: index === currentImageIndex ? 1 : 0,
+                  transition: 'opacity 1.8s ease-in-out',
+                }}
+              >
+                <img
+                  src={src}
+                  alt={`Car wash background ${index + 1}`}
+                  className="w-full h-full object-cover md:blur-[2px] blur-md lg:blur-0"
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-transparent md:from-black/70 md:via-black/40 lg:from-black/40 lg:via-transparent"></div>
