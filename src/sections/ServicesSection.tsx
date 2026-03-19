@@ -18,8 +18,7 @@ export const ServicesSection = () => {
       title: "Standard Package",
       description:
         "A complete interior and exterior clean for everyday freshness. Includes vacuuming, dashboard wipe, window cleaning and full exterior wash. Ideal for routine maintenance. From £40.",
-      image:
-        "https://images.pexels.com/photos/4489749/pexels-photo-4489749.jpeg?auto=compress&cs=tinysrgb&w=600",
+      image: "/9.jpeg",
     },
     {
       icon: Shield,
@@ -34,16 +33,14 @@ export const ServicesSection = () => {
       title: "Ultimate Package",
       description:
         "Our most comprehensive deep clean. Includes full interior and exterior detailing, stain removal, and deep surface cleaning to restore your car to near showroom condition. From £120.",
-      image:
-        "https://images.pexels.com/photos/5288707/pexels-photo-5288707.jpeg?auto=compress&cs=tinysrgb&w=600",
+      image: "/8.jpeg",
     },
     {
       icon: RefreshCcw,
       title: "Maintenance Plan",
       description:
         "Monthly premium care to keep your car in top condition all year. Includes full interior and exterior cleaning with paint protection. Requires one Premium Package before signup. £45/month.",
-      image:
-        "https://images.pexels.com/photos/6873086/pexels-photo-6873086.jpeg?auto=compress&cs=tinysrgb&w=600"
+      image: "/2.jpeg"
     }
   ];
 

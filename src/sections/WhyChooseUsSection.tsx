@@ -45,7 +45,7 @@ export const WhyChooseUsSection = () => {
             <div className="absolute rounded-xl z-0 w-[280px] sm:w-[391px] h-[280px] sm:h-[383px] bg-[#A8D4F5] rotate-[8deg] transform"></div>
 
             <img
-              src="https://images.pexels.com/photos/3806288/pexels-photo-3806288.jpeg?auto=compress&cs=tinysrgb&w=600"
+              src="/0.jpeg"
               alt="Professional Car Detailing"
               className="relative z-10 w-full max-w-[280px] sm:max-w-[383px] h-[270px] sm:h-[366px] object-cover rounded-xl shadow-lg"
             />
