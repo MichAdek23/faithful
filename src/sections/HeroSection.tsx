@@ -11,7 +11,7 @@ export const HeroSection = () => {
   // Array of your 4 images
   const heroImages = [
     '/LandingPage1.png',
-    '/bikeAgain.jpeg',
+    '/LandingPage2.png',
     '/tires.jpeg',
     '/cleaning.jpeg'
   ];
