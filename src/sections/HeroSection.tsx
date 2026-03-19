@@ -12,6 +12,7 @@ export const HeroSection = () => {
   const heroImages = [
     '/LandingPage1.png',
     '/LandingPage2.png',
+    '/LandingPage3.png',
     '/tires.jpeg',
     '/cleaning.jpeg'
   ];
