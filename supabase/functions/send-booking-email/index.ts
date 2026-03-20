@@ -273,13 +273,38 @@ Deno.serve(async (req: Request) => {
 
     const customerData = await customerRes.json();
 
-    const { data: admins } = await supabase
+    const { data: notifAdmins } = await supabase
       .from('admin_notifications')
       .select('email, name')
       .eq('is_active', true)
       .eq('receive_new_bookings', true);
 
-    if (admins && admins.length > 0) {
+    const { data: registeredAdmins } = await supabase
+      .from('admins')
+      .select('email, full_name')
+      .eq('is_active', true);
+
+    const emailSet = new Set<string>();
+    const allAdmins: { email: string; name: string }[] = [];
+
+    if (notifAdmins) {
+      for (const a of notifAdmins) {
+        if (!emailSet.has(a.email)) {
+          emailSet.add(a.email);
+          allAdmins.push({ email: a.email, name: a.name });
+        }
+      }
+    }
+    if (registeredAdmins) {
+      for (const a of registeredAdmins) {
+        if (!emailSet.has(a.email)) {
+          emailSet.add(a.email);
+          allAdmins.push({ email: a.email, name: a.full_name });
+        }
+      }
+    }
+
+    if (allAdmins.length > 0) {
       const adminServiceSection = isMultiCar && cars
         ? cars.map(car => `
             <div class="detail-row">
@@ -388,7 +413,7 @@ Deno.serve(async (req: Request) => {
         </html>
       `;
 
-      const adminEmails = admins.map(admin => admin.email);
+      const adminEmails = allAdmins.map(admin => admin.email);
 
       const adminRes = await fetch("https://api.resend.com/emails", {
         method: "POST",
