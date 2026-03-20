@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Bell, Check, CheckCheck, Trash2, AlertCircle } from 'lucide-react';
+import { Bell, Check, CheckCheck, Trash2, CircleAlert as AlertCircle } from 'lucide-react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 interface Notification {
   id: string;
@@ -14,27 +15,31 @@ interface Notification {
   is_read: boolean;
   created_at: string;
   read_at: string | null;
+  admin_id: string | null;
 }
 
 export function AdminNotificationsList() {
+  const { adminData } = useAdminAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
   useEffect(() => {
-    fetchNotifications();
+    if (adminData?.id) {
+      fetchNotifications();
+    }
 
     const notificationsSubscription = supabase
       .channel('notifications-list')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
-        fetchNotifications();
+        if (adminData?.id) fetchNotifications();
       })
       .subscribe();
 
     return () => {
       notificationsSubscription.unsubscribe();
     };
-  }, []);
+  }, [adminData?.id]);
 
   const fetchNotifications = async () => {
     setLoading(true);
@@ -59,10 +64,13 @@ export function AdminNotificationsList() {
   };
 
   const markAllAsRead = async () => {
+    const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
+    if (unreadIds.length === 0) return;
+
     await supabase
       .from('notifications')
       .update({ is_read: true, read_at: new Date().toISOString() })
-      .eq('is_read', false);
+      .in('id', unreadIds);
 
     fetchNotifications();
   };

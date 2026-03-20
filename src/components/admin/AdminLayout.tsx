@@ -37,19 +37,21 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
   };
 
   useEffect(() => {
-    fetchUnreadCount();
+    if (adminData?.id) {
+      fetchUnreadCount();
+    }
 
     const notificationsSubscription = supabase
       .channel('unread-notifications')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
-        fetchUnreadCount();
+        if (adminData?.id) fetchUnreadCount();
       })
       .subscribe();
 
     return () => {
       notificationsSubscription.unsubscribe();
     };
-  }, []);
+  }, [adminData?.id]);
 
   const fetchUnreadCount = async () => {
     const { count } = await supabase

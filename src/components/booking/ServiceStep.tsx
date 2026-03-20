@@ -316,15 +316,23 @@ export function ServiceStep({
           ? `${localCars[0].serviceType} for ${localCars[0].vehicleType}`
           : `${localCars.length} cars (${localCars.map(c => c.vehicleType).join(', ')})`;
 
-        await supabase.from('notifications').insert([
-          {
-            title: 'New Booking Received',
-            message: `${bookingData.customerName} booked ${carSummary} on ${bookingData.date} at ${bookingData.time}`,
-            type: 'booking',
-            booking_id: primaryBooking.id,
-            is_read: false,
-          },
-        ]);
+        const { data: activeAdmins } = await supabase
+          .from('admins')
+          .select('id')
+          .eq('is_active', true);
+
+        if (activeAdmins && activeAdmins.length > 0) {
+          await supabase.from('notifications').insert(
+            activeAdmins.map((admin) => ({
+              title: 'New Booking Received',
+              message: `${bookingData.customerName} booked ${carSummary} on ${bookingData.date} at ${bookingData.time}`,
+              type: 'booking',
+              booking_id: primaryBooking.id,
+              is_read: false,
+              admin_id: admin.id,
+            }))
+          );
+        }
       }
 
       // Get environment variables safely
