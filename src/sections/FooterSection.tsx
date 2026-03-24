@@ -1,4 +1,4 @@
-import { Phone, Mail, X } from "lucide-react";
+import { Phone, Mail, X, Instagram } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,22 @@ interface NotificationModalProps {
   onClose: () => void;
   message: string;
 }
+
+// TikTok Icon Component
+const TikTokIcon = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+  </svg>
+);
 
 // Modal Component
 const PolicyModal = ({ isOpen, onClose, title, content }: PolicyModalProps) => {
@@ -126,6 +142,20 @@ export const FooterSection = () => {
       icon: Mail,
       text: "faithfulautocare00@gmail.com",
       href: "mailto:faithfulautocare00@gmail.com",
+    },
+  ];
+
+  // Social media links
+  const socialLinks = [
+    {
+      icon: Instagram,
+      href: "https://www.instagram.com/faithful_autocare?igsh=MThnbDR4bGRyajZpNw==",
+      label: "Instagram",
+    },
+    {
+      icon: TikTokIcon,
+      href: "https://vm.tiktok.com/ZS9RgbrSKBDMA-34HSD/",
+      label: "TikTok",
     },
   ];
 
@@ -353,6 +383,27 @@ export const FooterSection = () => {
                     </a>
                   </div>
                 ))}
+              </div>
+
+              {/* Social Media Links Section */}
+              <div className="flex flex-col gap-3 sm:gap-4 mt-2">
+                <h3 className="font-poppins font-semibold text-white text-base sm:text-lg">
+                  Follow Us
+                </h3>
+                <div className="flex gap-3 sm:gap-4">
+                  {socialLinks.map((social, index) => (
+                    <a
+                      key={index}
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-9 h-9 sm:w-10 sm:h-10 bg-blue-500 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
+                      aria-label={social.label}
+                    >
+                      <social.icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    </a>
+                  ))}
+                </div>
               </div>
             </div>
 
