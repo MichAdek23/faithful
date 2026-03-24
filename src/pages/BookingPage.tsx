@@ -95,6 +95,70 @@ const animationStyles = `
     }
   }
   
+  @keyframes run-around {
+    0% {
+      top: 0%;
+      left: 0%;
+      transform: rotate(0deg);
+    }
+    25% {
+      top: 0%;
+      left: calc(100% - 2rem);
+      transform: rotate(90deg);
+    }
+    50% {
+      top: calc(100% - 2rem);
+      left: calc(100% - 2rem);
+      transform: rotate(180deg);
+    }
+    75% {
+      top: calc(100% - 2rem);
+      left: 0%;
+      transform: rotate(270deg);
+    }
+    100% {
+      top: 0%;
+      left: 0%;
+      transform: rotate(360deg);
+    }
+  }
+  
+  @keyframes run-around-delayed {
+    0% {
+      top: 0%;
+      left: 0%;
+      transform: rotate(0deg);
+      opacity: 0;
+    }
+    12.5% {
+      opacity: 1;
+    }
+    25% {
+      top: 0%;
+      left: calc(100% - 1.25rem);
+      transform: rotate(90deg);
+    }
+    50% {
+      top: calc(100% - 1.25rem);
+      left: calc(100% - 1.25rem);
+      transform: rotate(180deg);
+    }
+    75% {
+      top: calc(100% - 1.25rem);
+      left: 0%;
+      transform: rotate(270deg);
+    }
+    87.5% {
+      opacity: 1;
+    }
+    100% {
+      top: 0%;
+      left: 0%;
+      transform: rotate(360deg);
+      opacity: 0;
+    }
+  }
+  
   .animate-slide-x {
     animation: slide-x 2s linear infinite;
   }
@@ -109,6 +173,14 @@ const animationStyles = `
   
   .animate-slide-y-reverse {
     animation: slide-y-reverse 2s linear infinite;
+  }
+  
+  .animate-run-around {
+    animation: run-around 6s linear infinite;
+  }
+  
+  .animate-run-around-delayed {
+    animation: run-around-delayed 6s linear infinite;
   }
 `;
 
@@ -243,7 +315,7 @@ export function BookingPage() {
       {showPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm transition-all duration-300">
           <div className="relative bg-white rounded-2xl shadow-2xl max-w-md mx-4 p-6 sm:p-8 animate-in fade-in zoom-in duration-300 overflow-hidden">
-            {/* Border animations only - no cars */}
+            {/* Animated Car SVG that runs around the card */}
             <div className="absolute inset-0 pointer-events-none">
               {/* Top border animation */}
               <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-[#1E90FF] to-transparent animate-slide-x" />
@@ -253,6 +325,28 @@ export function BookingPage() {
               <div className="absolute bottom-0 right-0 w-full h-0.5 bg-gradient-to-r from-transparent via-[#1E90FF] to-transparent animate-slide-x-reverse" />
               {/* Left border animation */}
               <div className="absolute bottom-0 left-0 h-full w-0.5 bg-gradient-to-b from-transparent via-[#1E90FF] to-transparent animate-slide-y-reverse" />
+              
+              {/* Animated Car SVG - runs around the perimeter */}
+              <div className="absolute animate-run-around">
+                <svg 
+                  className="w-8 h-8 text-[#1E90FF] filter drop-shadow-lg" 
+                  fill="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+                </svg>
+              </div>
+              
+              {/* Additional smaller car for more dynamic effect */}
+              <div className="absolute animate-run-around-delayed">
+                <svg 
+                  className="w-5 h-5 text-[#1E90FF]/60 filter drop-shadow" 
+                  fill="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+                </svg>
+              </div>
             </div>
 
             {/* Close Button */}
