@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Droplet, Sparkles, Gem, Plus, Trash2, Gift, Calendar, Star, Tag, Percent, CreditCard, CircleCheck as CheckCircle } from 'lucide-react';
+import { Droplet, Sparkles, Gem, Plus, Trash2, Calendar, Star, Tag, Percent, CreditCard, CircleCheck as CheckCircle, Info } from 'lucide-react';
 import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 import { supabase } from '../../lib/supabase';
 import type { CarEntry, BookingData } from '../../pages/BookingPage';
 
@@ -17,9 +18,22 @@ interface ServiceStepProps {
 interface DiscountInfo {
   isFirstTime: boolean;
   firstTimeDiscount: number;
+  /**
+   * Always zero now that the multi‑car offer has been removed. Kept for
+   * backwards compatibility with other parts of the codebase and email
+   * notifications.
+   */
   multiCarDiscount: number;
   originalTotal: number;
   finalTotal: number;
+  /**
+   * Sum of all condition fees across cars. Included in originalTotal.
+   */
+  conditionFees?: number;
+  /**
+   * Location surcharge applied once. Included in originalTotal.
+   */
+  locationSurcharge?: number;
 }
 
 const services = [
@@ -110,25 +124,41 @@ const hasRecentPremiumService = async (email?: string, phone?: string): Promise<
   return (data && data.length > 0);
 };
 
-function calculateDiscounts(cars: CarEntry[], isFirstTime: boolean): DiscountInfo {
-  const originalTotal = cars.reduce((sum, c) => sum + c.servicePrice, 0);
-  let multiCarDiscount = 0;
-  let afterMultiCar = originalTotal;
-
-  if (cars.length >= 5) {
-    const cheapest = Math.min(...cars.map(c => c.servicePrice));
-    multiCarDiscount = cheapest;
-    afterMultiCar = originalTotal - cheapest;
-  }
-
+/**
+ * Computes discount information given the cars selected, whether the user is a first
+ * time customer and any location surcharge. The multi‑car discount has been
+ * removed, so that field will always be zero. The original total now includes
+ * condition fees and the one‑off location surcharge. If the user is first
+ * time then 15% of the original total (including surcharges) is deducted.
+ */
+function calculateDiscounts(
+  cars: CarEntry[],
+  isFirstTime: boolean,
+  locationSurcharge: number = 0
+): DiscountInfo {
+  // Sum base service prices and condition fees
+  const baseAndCondition = cars.reduce((sum, c) => {
+    const conditionFee = c.conditionFee ?? 0;
+    return sum + c.servicePrice + conditionFee;
+  }, 0);
+  const originalTotal = baseAndCondition + locationSurcharge;
+  const multiCarDiscount = 0;
   let firstTimeDiscount = 0;
-  if (isFirstTime) {
-    firstTimeDiscount = Math.round(afterMultiCar * 0.15 * 100) / 100;
+  if (isFirstTime && originalTotal > 0) {
+    // Round to two decimal places to avoid floating point precision issues
+    firstTimeDiscount = Math.round(originalTotal * 0.15 * 100) / 100;
   }
-
-  const finalTotal = Math.max(0, afterMultiCar - firstTimeDiscount);
-
-  return { isFirstTime, firstTimeDiscount, multiCarDiscount, originalTotal, finalTotal };
+  const finalTotal = Math.max(0, originalTotal - firstTimeDiscount);
+  const conditionFees = cars.reduce((sum, c) => sum + (c.conditionFee ?? 0), 0);
+  return {
+    isFirstTime,
+    firstTimeDiscount,
+    multiCarDiscount,
+    originalTotal,
+    finalTotal,
+    conditionFees,
+    locationSurcharge,
+  };
 }
 
 export function ServiceStep({ 
@@ -142,8 +172,19 @@ export function ServiceStep({
 }: ServiceStepProps) {
   const [localCars, setLocalCars] = useState<CarEntry[]>(() => {
     if (cars.length > 0) return cars;
-    // Set default vehicle type to satisfy CarEntry type
-    return [{ id: generateId(), serviceType: '', servicePrice: 0, vehicleType: 'Car' }];
+    // Provide defaults for a new car including optional fields
+    return [
+      {
+        id: generateId(),
+        serviceType: '',
+        servicePrice: 0,
+        vehicleType: 'Car',
+        vehicleDetails: '',
+        vehicleCondition: 'mild',
+        conditionFee: 0,
+        locationSurcharge: undefined,
+      },
+    ];
   });
   const [expandedCarIndex, setExpandedCarIndex] = useState(
     cars.length > 0 && cars.every(c => c.serviceType) ? -1 : 0
@@ -174,12 +215,16 @@ export function ServiceStep({
   };
 
   const addCar = () => {
-    // Add default vehicle type to satisfy CarEntry type
-    const newCar: CarEntry = { 
-      id: generateId(), 
-      serviceType: '', 
-      servicePrice: 0, 
-      vehicleType: 'Car' // Default vehicle type
+    // Add default vehicle type and optional fields
+    const newCar: CarEntry = {
+      id: generateId(),
+      serviceType: '',
+      servicePrice: 0,
+      vehicleType: 'Car',
+      vehicleDetails: '',
+      vehicleCondition: 'mild',
+      conditionFee: 0,
+      locationSurcharge: undefined,
     };
     const updated = [...localCars, newCar];
     setLocalCars(updated);
@@ -219,10 +264,15 @@ export function ServiceStep({
     (car) => car.serviceType && car.servicePrice > 0
   );
 
-  const carsUntilFree = Math.max(0, 5 - localCars.length);
-  
-  // Calculate discounts
-  const discount = calculateDiscounts(localCars, isFirstTime === true);
+  // Determine location surcharge based on the distance supplied in bookingData
+  const distanceValue = (bookingData as any).distanceFromServiceArea;
+  let locationSurcharge = 0;
+  if (typeof distanceValue === 'number' && distanceValue > 5) {
+    locationSurcharge = 14;
+  }
+
+  // Calculate discounts (no multi‑car discount) including surcharges
+  const discount = calculateDiscounts(localCars, isFirstTime === true, locationSurcharge);
 
   const handleConfirmBooking = async () => {
     if (!allCarsComplete) return;
@@ -250,37 +300,30 @@ export function ServiceStep({
 
       const groupId = crypto.randomUUID();
       const primaryBookingCode = generateBookingCode();
-      const cheapestPrice = localCars.length >= 5 ? Math.min(...localCars.map(c => c.servicePrice)) : 0;
-      let cheapestUsed = false;
 
+      // Build rows for each car. Multi‑car free logic has been removed. Each row
+      // now incorporates any condition fee and the one‑off location surcharge into
+      // the original price. A first‑time discount is applied against that total.
       const bookingRows = localCars.map((car, index) => {
+        // Base price of service plus condition fee
+        const basePrice = car.servicePrice + (car.conditionFee ?? 0);
+        // Add location surcharge once per booking; replicate on each row for convenience
+        const originalPrice = basePrice + locationSurcharge;
         let discountAmount = 0;
         let discountType: string | null = null;
-
-        const isCheapest = localCars.length >= 5 && !cheapestUsed && car.servicePrice === cheapestPrice;
-        if (isCheapest) {
-          cheapestUsed = true;
-          discountAmount = car.servicePrice;
-          discountType = 'multi_car_free';
+        if (isFirstTime && originalPrice > 0) {
+          // Apply 15% discount on the original price
+          discountAmount = Math.round(originalPrice * 0.15 * 100) / 100;
+          discountType = 'first_time';
         }
-
-        const remainingPrice = car.servicePrice - discountAmount;
-        let firstTimeAmt = 0;
-        if (isFirstTime && remainingPrice > 0) {
-          firstTimeAmt = Math.round(remainingPrice * 0.15 * 100) / 100;
-          discountAmount += firstTimeAmt;
-          discountType = discountType ? `${discountType}+first_time` : 'first_time';
-        }
-
-        const finalPrice = Math.max(0, Math.round((car.servicePrice - discountAmount) * 100) / 100);
-
+        const finalPrice = Math.max(0, Math.round((originalPrice - discountAmount) * 100) / 100);
         return {
           booking_code: index === 0 ? primaryBookingCode : generateBookingCode(),
           group_id: localCars.length > 1 ? groupId : null,
           booking_date: bookingData.date,
           booking_time: bookingData.time,
           service_type: car.serviceType,
-          original_price: car.servicePrice,
+          original_price: originalPrice,
           service_price: finalPrice,
           vehicle_type: car.vehicleType,
           customer_name: bookingData.customerName,
@@ -293,6 +336,10 @@ export function ServiceStep({
           status: 'pending',
           discount_amount: discountAmount,
           discount_type: discountType,
+          vehicle_condition: car.vehicleCondition ?? '',
+          vehicle_details: car.vehicleDetails ?? '',
+          condition_fee: car.conditionFee ?? 0,
+          location_surcharge: locationSurcharge,
         };
       });
 
@@ -365,6 +412,8 @@ export function ServiceStep({
               serviceType: c.serviceType,
               vehicleType: c.vehicleType,
               servicePrice: c.servicePrice,
+              conditionFee: c.conditionFee,
+              vehicleCondition: c.vehicleCondition,
             })),
             discount_info: {
               is_first_time: isFirstTime,
@@ -372,6 +421,8 @@ export function ServiceStep({
               multi_car_discount: discount.multiCarDiscount,
               original_total: discount.originalTotal,
               final_total: discount.finalTotal,
+              condition_fees: discount.conditionFees,
+              location_surcharge: discount.locationSurcharge,
             },
           }),
         }).catch(err => console.error('Email send failed:', err));
@@ -396,19 +447,7 @@ export function ServiceStep({
         <h3 className="text-xl font-semibold text-gray-900">Choose Your Service</h3>
       </div>
 
-      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-4">
-        <div className="flex items-start gap-3">
-          <Gift className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="font-semibold text-emerald-800 text-sm">Book 5 cars, get 1 FREE!</p>
-            <p className="text-xs text-emerald-700 mt-0.5">
-              {localCars.length < 5
-                ? `Add ${carsUntilFree} more car${carsUntilFree !== 1 ? 's' : ''} to unlock this deal. The cheapest car wash will be on us.`
-                : 'Deal unlocked! The cheapest car in your order is FREE.'}
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Multi‑car promotional banner removed as the offer is no longer active */}
 
       {maintenancePlanWarning && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-3">
@@ -449,9 +488,8 @@ export function ServiceStep({
                     </p>
                     {isComplete && (
                       <p className="text-xs text-[#1E90FF] font-semibold">
-                        {localCars.length >= 5 && car.servicePrice === Math.min(...localCars.map(c => c.servicePrice))
-                          ? 'FREE'
-                          : car.serviceType?.includes('month') ? `£${car.servicePrice}/month` : `£${car.servicePrice}`}
+                        {/* Display the service price without any multi‑car discount logic. If the service is a monthly subscription, include '/month'. */}
+                        {car.serviceType?.includes('month') ? `£${car.servicePrice}/month` : `£${car.servicePrice}`}
                       </p>
                     )}
                   </div>
@@ -480,11 +518,59 @@ export function ServiceStep({
               </button>
 
               {isExpanded && (
-                <CarServiceSelector
-                  car={car}
-                  onServiceSelect={(serviceName) => handleServiceSelect(index, serviceName)}
-                  onClose={() => setExpandedCarIndex(-1)}
-                />
+                <div>
+                  {/* Service selection component */}
+                  <CarServiceSelector
+                    car={car}
+                    onServiceSelect={(serviceName) => handleServiceSelect(index, serviceName)}
+                    onClose={() => setExpandedCarIndex(-1)}
+                  />
+                  {/* Additional fields for vehicle details and condition */}
+                  <div className="p-4 sm:p-6 space-y-4 border-t border-gray-200">
+                    {/* Vehicle details input */}
+                    <div>
+                      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                        <Info className="w-4 h-4" />
+                        Vehicle details
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="e.g. BMW 3 Series, red"
+                        value={car.vehicleDetails || ''}
+                        onChange={(e) => updateCar(index, { vehicleDetails: e.target.value })}
+                        className="h-10"
+                      />
+                    </div>
+                    {/* Vehicle condition selector */}
+                    <div>
+                      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                        <Droplet className="w-4 h-4" />
+                        Vehicle condition
+                      </label>
+                      <select
+                        value={car.vehicleCondition || 'mild'}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          let fee = 0;
+                          if (val === 'medium') fee = 3;
+                          if (val === 'very_dirty') fee = 5;
+                          updateCar(index, { vehicleCondition: val, conditionFee: fee });
+                        }}
+                        className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm text-gray-700 bg-white"
+                      >
+                        <option value="mild">Mild (no extra)</option>
+                        <option value="medium">Medium (+£3)</option>
+                        <option value="very_dirty">Very dirty (+£5)</option>
+                      </select>
+                      {car.vehicleCondition === 'medium' && (
+                        <p className="text-xs text-emerald-600 mt-1">A £3 surcharge will be applied</p>
+                      )}
+                      {car.vehicleCondition === 'very_dirty' && (
+                        <p className="text-xs text-emerald-600 mt-1">A £5 surcharge will be applied</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           );
@@ -525,39 +611,50 @@ export function ServiceStep({
               <div className="border-t pt-3 mt-3 space-y-2">
                 <p className="font-medium text-gray-700">Services Selected:</p>
                 {localCars.map((car, i) => {
-                  const isFree = localCars.length >= 5 && car.servicePrice === Math.min(...localCars.map(c => c.servicePrice)) && i === localCars.findIndex(c => c.servicePrice === Math.min(...localCars.map(x => x.servicePrice)));
+                  // Compute price including any condition fee (but excluding location surcharge which is shown separately)
+                  const perCarTotal = car.servicePrice + (car.conditionFee ?? 0);
                   return (
                     <div key={car.id} className="flex justify-between items-center pl-2">
                       <span className="text-gray-600 text-xs sm:text-sm">
                         Car {i + 1}: {car.serviceType?.replace(' – £' + car.servicePrice, '')} ({car.vehicleType})
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {isFree && (
-                          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">FREE</span>
+                        {car.vehicleCondition && car.vehicleCondition !== 'mild' && (
+                          <span className="ml-1 text-emerald-600">– {car.vehicleCondition.replace('_', ' ')}</span>
                         )}
-                        <span className={`font-medium ${isFree ? 'line-through text-gray-400' : ''}`}>
-                          £{car.servicePrice}
-                          {car.serviceType?.includes('month') && '/mo'}
-                        </span>
-                      </div>
+                      </span>
+                      <span className="font-medium">
+                        £{perCarTotal.toFixed(2)}
+                        {car.serviceType?.includes('month') && '/mo'}
+                      </span>
                     </div>
                   );
                 })}
               </div>
 
-              <div className="border-t pt-3 mt-3 space-y-1.5">
+                <div className="border-t pt-3 mt-3 space-y-1.5">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal:</span>
-                  <span className="font-medium">£{discount.originalTotal}</span>
+                  <span className="font-medium">£{discount.originalTotal.toFixed(2)}</span>
                 </div>
 
-                {discount.multiCarDiscount > 0 && (
+                {/* Condition fee summary */}
+                {discount.conditionFees && discount.conditionFees > 0 && (
                   <div className="flex justify-between text-emerald-600">
                     <span className="flex items-center gap-1">
                       <Tag className="w-3 h-3" />
-                      Multi-car deal (1 free):
+                      Condition fees:
                     </span>
-                    <span className="font-medium">-£{discount.multiCarDiscount}</span>
+                    <span className="font-medium">+£{discount.conditionFees.toFixed(2)}</span>
+                  </div>
+                )}
+
+                {/* Location surcharge summary */}
+                {discount.locationSurcharge && discount.locationSurcharge > 0 && (
+                  <div className="flex justify-between text-emerald-600">
+                    <span className="flex items-center gap-1">
+                      <Tag className="w-3 h-3" />
+                      Location surcharge:
+                    </span>
+                    <span className="font-medium">+£{discount.locationSurcharge.toFixed(2)}</span>
                   </div>
                 )}
 

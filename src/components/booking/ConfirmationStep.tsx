@@ -23,9 +23,8 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
     });
   };
 
-  const hasDiscount = discountInfo && (discountInfo.multiCarDiscount > 0 || discountInfo.firstTimeDiscount > 0);
+  const hasDiscount = discountInfo && (discountInfo.firstTimeDiscount > 0);
   const isMultiCar = cars.length > 1;
-  const cheapestPrice = isMultiCar ? Math.min(...cars.map(c => c.servicePrice)) : 0;
 
   return (
     <div className="space-y-8">
@@ -94,11 +93,9 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
             </h3>
           </div>
           <div className="space-y-3">
-            {cars.map((car, index) => {
-              const isFree = isMultiCar && 
-                car.servicePrice === cheapestPrice && 
-                index === cars.findIndex(c => c.servicePrice === cheapestPrice);
-
+          {cars.map((car, index) => {
+              // Price per car includes any condition fee. Location surcharge is displayed separately in the price breakdown.
+              const perCarTotal = car.servicePrice + (car.conditionFee ?? 0);
               return (
                 <div key={car.id} className="bg-gray-50 rounded-lg p-3">
                   <div className="flex justify-between items-start mb-1">
@@ -107,18 +104,19 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
                       <span className="font-medium text-gray-900">Vehicle {index + 1}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      {isFree && (
-                        <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
-                          FREE
-                        </span>
-                      )}
-                      <span className={`font-semibold ${isFree ? 'line-through text-gray-400' : 'text-gray-900'}`}>
-                        £{car.servicePrice}
+                      <span className="font-semibold text-gray-900">
+                        £{perCarTotal.toFixed(2)}
                       </span>
                     </div>
                   </div>
                   <p className="text-sm text-gray-700 ml-6">{car.serviceType}</p>
                   <p className="text-xs text-gray-500 ml-6">Vehicle: {car.vehicleType}</p>
+                  {car.vehicleCondition && car.vehicleCondition !== 'mild' && (
+                    <p className="text-xs text-gray-500 ml-6">Condition: {car.vehicleCondition.replace('_', ' ')}</p>
+                  )}
+                  {car.vehicleDetails && car.vehicleDetails.trim().length > 0 && (
+                    <p className="text-xs text-gray-500 ml-6">Details: {car.vehicleDetails}</p>
+                  )}
                 </div>
               );
             })}
@@ -135,13 +133,25 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
                 <span className="font-medium">£{discountInfo.originalTotal.toFixed(2)}</span>
               </div>
               
-              {discountInfo.multiCarDiscount > 0 && (
+              {/* Condition fees summary */}
+              {discountInfo.conditionFees && discountInfo.conditionFees > 0 && (
                 <div className="flex justify-between text-sm text-emerald-600">
                   <span className="flex items-center gap-1">
                     <Tag className="w-3 h-3" />
-                    Multi-car discount (5th car free):
+                    Condition fees:
                   </span>
-                  <span className="font-medium">-£{discountInfo.multiCarDiscount.toFixed(2)}</span>
+                  <span className="font-medium">+£{discountInfo.conditionFees.toFixed(2)}</span>
+                </div>
+              )}
+
+              {/* Location surcharge summary */}
+              {discountInfo.locationSurcharge && discountInfo.locationSurcharge > 0 && (
+                <div className="flex justify-between text-sm text-emerald-600">
+                  <span className="flex items-center gap-1">
+                    <Tag className="w-3 h-3" />
+                    Location surcharge:
+                  </span>
+                  <span className="font-medium">+£{discountInfo.locationSurcharge.toFixed(2)}</span>
                 </div>
               )}
               

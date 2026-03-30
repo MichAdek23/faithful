@@ -10,15 +10,40 @@ const corsHeaders = {
 interface CarInfo {
   serviceType: string;
   vehicleType: string;
+  /**
+   * Base service price before add‑ons. Does not include condition fee or
+   * location surcharge.
+   */
   servicePrice: number;
+  /**
+   * Optional extra fee based on vehicle dirtiness. When undefined defaults
+   * to zero. Included when calculating the per‑car total.
+   */
+  conditionFee?: number;
+  /**
+   * How dirty the car is (mild, medium, very_dirty). Displayed in the car row if provided.
+   */
+  vehicleCondition?: string;
 }
 
 interface DiscountInfo {
   is_first_time: boolean;
   first_time_discount: number;
+  /**
+   * The multi‑car discount has been deprecated and will always be zero.
+   * This field is retained for backwards compatibility.
+   */
   multi_car_discount: number;
   original_total: number;
   final_total: number;
+  /**
+   * Aggregate of all condition fees. Included in original_total.
+   */
+  condition_fees?: number;
+  /**
+   * One‑off location surcharge. Included in original_total.
+   */
+  location_surcharge?: number;
 }
 
 interface BookingData {
@@ -40,17 +65,15 @@ interface BookingData {
 }
 
 function buildCarRows(cars: CarInfo[], discountInfo?: DiscountInfo): string {
-  const cheapest = Math.min(...cars.map(c => c.servicePrice));
-  let cheapestUsed = false;
-
   return cars.map((car) => {
-    const isFree = discountInfo && discountInfo.multi_car_discount > 0 && !cheapestUsed && car.servicePrice === cheapest;
-    if (isFree) cheapestUsed = true;
-
+    const total = car.servicePrice + (car.conditionFee ?? 0);
+    const condition = car.vehicleCondition && car.vehicleCondition !== 'mild'
+      ? ` – ${car.vehicleCondition.replace('_', ' ')}`
+      : '';
     return `
       <div class="detail-row">
-        <span class="detail-label">${car.serviceType} (${car.vehicleType})</span>
-        <span class="detail-value">${isFree ? '<span style="color:#059669;font-weight:bold;">FREE</span> <s>&pound;' + car.servicePrice + '</s>' : '&pound;' + car.servicePrice}</span>
+        <span class="detail-label">${car.serviceType} (${car.vehicleType}${condition})</span>
+        <span class="detail-value">&pound;${total.toFixed(2)}</span>
       </div>
     `;
   }).join('');
@@ -58,11 +81,19 @@ function buildCarRows(cars: CarInfo[], discountInfo?: DiscountInfo): string {
 
 function buildDiscountRows(discountInfo: DiscountInfo): string {
   let html = '';
-  if (discountInfo.multi_car_discount > 0) {
+  if (discountInfo.condition_fees && discountInfo.condition_fees > 0) {
     html += `
       <div class="detail-row" style="color:#059669;">
-        <span class="detail-label">Multi-car deal (1 free):</span>
-        <span class="detail-value">-&pound;${discountInfo.multi_car_discount}</span>
+        <span class="detail-label">Condition fees:</span>
+        <span class="detail-value">+&pound;${discountInfo.condition_fees.toFixed(2)}</span>
+      </div>
+    `;
+  }
+  if (discountInfo.location_surcharge && discountInfo.location_surcharge > 0) {
+    html += `
+      <div class="detail-row" style="color:#059669;">
+        <span class="detail-label">Location surcharge:</span>
+        <span class="detail-value">+&pound;${discountInfo.location_surcharge.toFixed(2)}</span>
       </div>
     `;
   }
@@ -126,7 +157,11 @@ Deno.serve(async (req: Request) => {
     });
 
     const isMultiCar = cars && cars.length > 1;
-    const hasDiscount = discount_info && (discount_info.multi_car_discount > 0 || (discount_info.is_first_time && discount_info.first_time_discount > 0));
+    const hasDiscount = discount_info && (
+      (discount_info.condition_fees && discount_info.condition_fees > 0) ||
+      (discount_info.location_surcharge && discount_info.location_surcharge > 0) ||
+      (discount_info.is_first_time && discount_info.first_time_discount > 0)
+    );
     const finalPrice = discount_info ? discount_info.final_total : service_price;
 
     const serviceSection = isMultiCar && cars
@@ -157,12 +192,15 @@ Deno.serve(async (req: Request) => {
           <span class="detail-value">${vehicle_type}</span>
         </div>
         ${hasDiscount && discount_info ? `
-          <div class="detail-row" style="color:#059669;">
-            <span class="detail-label">First-time discount (15%):</span>
-            <span class="detail-value">-&pound;${discount_info.first_time_discount.toFixed(2)}</span>
+          <div style="border-top:1px solid #eee;margin-top:8px;padding-top:8px;">
+            <div class="detail-row">
+              <span class="detail-label">Subtotal:</span>
+              <span class="detail-value">&pound;${discount_info.original_total}</span>
+            </div>
+            ${buildDiscountRows(discount_info)}
           </div>
         ` : ''}
-        <div class="detail-row" style="border-bottom: none;">
+        <div class="detail-row" style="border-bottom: none; border-top:2px solid #eee; padding-top:12px;">
           <span class="detail-label">Total Price:</span>
           <span class="price">&pound;${Number(finalPrice).toFixed(2)}</span>
         </div>
@@ -305,13 +343,20 @@ Deno.serve(async (req: Request) => {
     }
 
     if (allAdmins.length > 0) {
-      const adminServiceSection = isMultiCar && cars
-        ? cars.map(car => `
-            <div class="detail-row">
-              <span class="detail-label">${car.serviceType} (${car.vehicleType}):</span>
-              <span class="detail-value">&pound;${car.servicePrice}</span>
-            </div>
-          `).join('')
+    const adminServiceSection = isMultiCar && cars
+        ? cars.map(car => {
+            // Include condition fee in the per‑car total for transparency
+            const total = car.servicePrice + (car.conditionFee ?? 0);
+            const condition = car.vehicleCondition && car.vehicleCondition !== 'mild'
+              ? ` – ${car.vehicleCondition.replace('_', ' ')}`
+              : '';
+            return `
+              <div class="detail-row">
+                <span class="detail-label">${car.serviceType} (${car.vehicleType}${condition}):</span>
+                <span class="detail-value">&pound;${total.toFixed(2)}</span>
+              </div>
+            `;
+          }).join('')
         : `
           <div class="detail-row">
             <span class="detail-label">Service:</span>
@@ -325,10 +370,11 @@ Deno.serve(async (req: Request) => {
 
       const discountSection = hasDiscount && discount_info ? `
         <div class="detail-row" style="color:#059669;">
-          <span class="detail-label">Discounts Applied:</span>
+          <span class="detail-label">Add-ons & Discounts:</span>
           <span class="detail-value">
-            ${discount_info.multi_car_discount > 0 ? `Multi-car: -&pound;${discount_info.multi_car_discount}` : ''}
-            ${discount_info.is_first_time && discount_info.first_time_discount > 0 ? ` First-time: -&pound;${discount_info.first_time_discount.toFixed(2)}` : ''}
+            ${discount_info.condition_fees && discount_info.condition_fees > 0 ? `Condition fees: +&pound;${discount_info.condition_fees.toFixed(2)}` : ''}
+            ${discount_info.location_surcharge && discount_info.location_surcharge > 0 ? `${discount_info.condition_fees && discount_info.condition_fees > 0 ? ' ' : ''}Location surcharge: +&pound;${discount_info.location_surcharge.toFixed(2)}` : ''}
+            ${discount_info.is_first_time && discount_info.first_time_discount > 0 ? `${(discount_info.condition_fees && discount_info.condition_fees > 0) || (discount_info.location_surcharge && discount_info.location_surcharge > 0) ? ' ' : ''}First-time: -&pound;${discount_info.first_time_discount.toFixed(2)}` : ''}
           </span>
         </div>
       ` : '';

@@ -11,9 +11,45 @@ const STORAGE_KEY = 'faithful-booking-draft';
 
 export interface CarEntry {
   id: string;
+  /**
+   * The service name chosen for this vehicle (e.g. "Basic Package – £25").
+   */
   serviceType: string;
+  /**
+   * Base price of the selected service before any add‑ons. This value does not include
+   * the condition fee or location surcharge. Pricing adjustments (e.g. first time
+   * discounts) should be calculated separately.
+   */
   servicePrice: number;
+  /**
+   * A high‑level vehicle category (e.g. Car, Van). This remains unchanged from
+   * the original implementation.
+   */
   vehicleType: string;
+  /**
+   * Free‑form details about the vehicle. Customers can provide information such as
+   * make, model, colour or registration to help the valeting team identify the car.
+   */
+  vehicleDetails?: string;
+  /**
+   * Indicates how dirty the vehicle is. Supported values: "mild", "medium" or
+   * "very_dirty". This property is optional; if omitted it is treated as
+   * "mild" with no additional fee.
+   */
+  vehicleCondition?: string;
+  /**
+   * An extra fee applied based on the selected vehicle condition. A value of
+   * 0 means no extra charge; 3 for medium dirt and 5 for very dirty. When
+   * undefined it defaults to 0.
+   */
+  conditionFee?: number;
+  /**
+   * A per‑booking location surcharge. If the booking address is more than
+   * five minutes from the service area a flat £14 fee applies. This value
+   * is duplicated across car entries for convenience when storing in the
+   * database.
+   */
+  locationSurcharge?: number;
 }
 
 export interface BookingData {
@@ -27,6 +63,12 @@ export interface BookingData {
   streetName: string;
   postCode: string;
   city: string;
+  /**
+   * Approximate travel time from the service area to the customer's location, in
+   * minutes. A surcharge is added if this exceeds 5 minutes. This value
+   * originates from user input in the details step.
+   */
+  distanceFromServiceArea?: number;
 }
 
 export interface DiscountInfo {
@@ -35,6 +77,14 @@ export interface DiscountInfo {
   multiCarDiscount: number;
   originalTotal: number;
   finalTotal: number;
+  /**
+   * Total of all condition fees across the booking. Included in originalTotal.
+   */
+  conditionFees?: number;
+  /**
+   * Location surcharge applied once per booking. Included in originalTotal.
+   */
+  locationSurcharge?: number;
 }
 
 // CSS animation keyframes as a string to inject
@@ -477,10 +527,10 @@ export function BookingPage() {
                 streetName={bookingData.streetName}
                 postCode={bookingData.postCode}
                 city={bookingData.city}
+                distanceFromServiceArea={bookingData.distanceFromServiceArea}
                 onDetailsChange={updateBookingData}
                 onNext={() => nextStep()}
                 onBack={prevStep}
-                bookingData={bookingData as BookingData}
               />
             )}
 

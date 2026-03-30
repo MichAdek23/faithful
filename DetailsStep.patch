@@ -1,0 +1,88 @@
+--- /tmp/original/faithful-main/src/components/booking/DetailsStep.tsx	2026-03-30 06:15:39.000000000 +0000
++++ faithful-main/src/components/booking/DetailsStep.tsx	2026-03-30 06:28:15.732629474 +0000
+@@ -3,7 +3,7 @@
+ import { Button } from '../ui/button';
+ import { Input } from '../ui/input';
+ import { supabase } from '../../lib/supabase';
+-import type { BookingData } from '../../pages/BookingPage';
++// BookingData no longer needed in this component since we moved surcharge logic into ServiceStep
+ 
+ interface DiscountInfo {
+   isFirstTime: boolean;
+@@ -21,6 +21,12 @@
+   streetName?: string;
+   postCode?: string;
+   city?: string;
++  /**
++   * Optional distance in minutes from the service area. A surcharge will be
++   * applied during the booking if this exceeds five minutes. Undefined or
++   * zero is treated as no surcharge.
++   */
++  distanceFromServiceArea?: number;
+   onDetailsChange: (data: {
+     customerName?: string;
+     customerEmail?: string;
+@@ -29,10 +35,10 @@
+     streetName?: string;
+     postCode?: string;
+     city?: string;
++    distanceFromServiceArea?: number;
+   }) => void;
+   onNext: () => void;
+   onBack: () => void;
+-  bookingData: BookingData;
+ }
+ 
+ export function DetailsStep({
+@@ -43,6 +49,7 @@
+   streetName,
+   postCode,
+   city,
++  distanceFromServiceArea,
+   onDetailsChange,
+   onNext,
+   onBack,
+@@ -54,6 +61,12 @@
+   const [street, setStreet] = useState(streetName || '');
+   const [postcode, setPostcode] = useState(postCode || '');
+   const [town, setTown] = useState(city || '');
++  // Track approximate travel time from the service area. Defaults to the
++  // provided prop or zero if undefined. This value is optional and will
++  // determine whether a location surcharge is applied later.
++  const [distance, setDistance] = useState<number>(
++    typeof distanceFromServiceArea === 'number' ? distanceFromServiceArea : 0
++  );
+   const [isSubmitting, setIsSubmitting] = useState(false);
+   const [error, setError] = useState('');
+   const [isFirstTime, setIsFirstTime] = useState<boolean | null>(null);
+@@ -254,6 +267,30 @@
+                 />
+               </div>
+             </div>
++
++        {/* Distance from service area (in minutes) */}
++        <div className="mt-4">
++          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
++            <MapPin className="w-4 h-4" />
++            Distance from service area (minutes)
++          </label>
++          <Input
++            type="number"
++            min="0"
++            placeholder="0"
++            value={distance}
++            onChange={(e) => {
++              const val = parseFloat(e.target.value);
++              const safeVal = isNaN(val) ? 0 : val;
++              setDistance(safeVal);
++              onDetailsChange({ distanceFromServiceArea: safeVal });
++            }}
++            className="h-12"
++          />
++          <p className="text-xs text-gray-500 mt-1">
++            If your address is more than 5 minutes from our service area, an extra £14 will be added to your booking.
++          </p>
++        </div>
+           </div>
+         </div>
+ 

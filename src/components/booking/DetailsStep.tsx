@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Phone, Info, MapPin, Chrome as Home, Building2, MapPinned } from 'lucide-react';
+import { User, Mail, Phone, Info, MapPin, Chrome as Home, Building2, MapPinned, Navigation, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { supabase } from '../../lib/supabase';
-import type { BookingData } from '../../pages/BookingPage';
+// BookingData no longer needed in this component since we moved surcharge logic into ServiceStep
 
 interface DiscountInfo {
   isFirstTime: boolean;
@@ -21,6 +21,12 @@ interface DetailsStepProps {
   streetName?: string;
   postCode?: string;
   city?: string;
+  /**
+   * Optional distance in minutes from the service area. A surcharge will be
+   * applied during the booking if this exceeds five minutes. Undefined or
+   * zero is treated as no surcharge.
+   */
+  distanceFromServiceArea?: number;
   onDetailsChange: (data: {
     customerName?: string;
     customerEmail?: string;
@@ -29,10 +35,39 @@ interface DetailsStepProps {
     streetName?: string;
     postCode?: string;
     city?: string;
+    distanceFromServiceArea?: number;
   }) => void;
   onNext: () => void;
   onBack: () => void;
-  bookingData: BookingData;
+}
+
+// Service area coordinates — 23 Chalkdown, Luton, LU2 7FH
+const SERVICE_AREA_LAT = 51.9029;
+const SERVICE_AREA_LNG = -0.3912;
+
+/**
+ * Haversine formula — returns straight-line distance in km between two
+ * lat/lng points. We convert this to an approximate driving time by
+ * assuming an average urban speed of 30 km/h and adding a 1.4x road
+ * factor for typical UK urban routes.
+ */
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function estimateDrivingMinutes(lat: number, lng: number): number {
+  const straightKm = haversineKm(lat, lng, SERVICE_AREA_LAT, SERVICE_AREA_LNG);
+  // Road factor 1.4x straight-line distance, 30 km/h average urban speed
+  const drivingKm = straightKm * 1.4;
+  return (drivingKm / 30) * 60;
 }
 
 export function DetailsStep({
@@ -43,6 +78,7 @@ export function DetailsStep({
   streetName,
   postCode,
   city,
+  distanceFromServiceArea,
   onDetailsChange,
   onNext,
   onBack,
@@ -54,6 +90,16 @@ export function DetailsStep({
   const [street, setStreet] = useState(streetName || '');
   const [postcode, setPostcode] = useState(postCode || '');
   const [town, setTown] = useState(city || '');
+
+  // Geolocation state
+  const [locationStatus, setLocationStatus] = useState<
+    'idle' | 'checking' | 'surcharge' | 'no_surcharge' | 'denied' | 'error'
+  >('idle');
+  const [drivingMinutes, setDrivingMinutes] = useState<number | null>(null);
+
+  const [distance, setDistance] = useState<number>(
+    typeof distanceFromServiceArea === 'number' ? distanceFromServiceArea : 0
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [isFirstTime, setIsFirstTime] = useState<boolean | null>(null);
@@ -80,6 +126,42 @@ export function DetailsStep({
     return () => clearTimeout(timeout);
   }, [email]);
 
+  const checkLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus('error');
+      return;
+    }
+
+    setLocationStatus('checking');
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const mins = estimateDrivingMinutes(
+          position.coords.latitude,
+          position.coords.longitude
+        );
+        const roundedMins = Math.round(mins * 10) / 10;
+        setDrivingMinutes(roundedMins);
+        setDistance(roundedMins);
+        onDetailsChange({ distanceFromServiceArea: roundedMins });
+
+        if (roundedMins > 5) {
+          setLocationStatus('surcharge');
+        } else {
+          setLocationStatus('no_surcharge');
+        }
+      },
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          setLocationStatus('denied');
+        } else {
+          setLocationStatus('error');
+        }
+      },
+      { timeout: 10000, maximumAge: 60000 }
+    );
+  };
+
   const handleNext = () => {
     if (!name || !email || !phone || !houseNum || !street || !postcode || !town) {
       setError('Please fill in all fields');
@@ -92,7 +174,6 @@ export function DetailsStep({
       return;
     }
 
-    // Save all details and move to next step
     onDetailsChange({
       customerName: name,
       customerEmail: email,
@@ -102,7 +183,7 @@ export function DetailsStep({
       postCode: postcode,
       city: town,
     });
-    
+
     onNext();
   };
 
@@ -254,6 +335,85 @@ export function DetailsStep({
                 />
               </div>
             </div>
+
+            {/* Location surcharge checker */}
+            <div className="mt-2 rounded-xl border border-gray-200 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-[#1E90FF]" />
+                  <span className="text-sm font-medium text-gray-700">Location surcharge check</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={checkLocation}
+                  disabled={locationStatus === 'checking'}
+                  className="flex items-center gap-1.5 text-xs font-medium text-white bg-[#1E90FF] hover:bg-[#1873CC] disabled:opacity-60 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  <Navigation className="w-3.5 h-3.5" />
+                  {locationStatus === 'checking'
+                    ? 'Checking…'
+                    : locationStatus === 'idle'
+                    ? 'Check my location'
+                    : 'Recheck'}
+                </button>
+              </div>
+
+              {locationStatus === 'idle' && (
+                <p className="text-xs text-gray-500">
+                  Tap the button to automatically check if a £14 location surcharge applies to your address.
+                </p>
+              )}
+
+              {locationStatus === 'checking' && (
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span className="inline-block w-3 h-3 border-2 border-[#1E90FF] border-t-transparent rounded-full animate-spin" />
+                  Getting your location…
+                </div>
+              )}
+
+              {locationStatus === 'no_surcharge' && drivingMinutes !== null && (
+                <div className="flex items-start gap-2 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                  <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-medium text-emerald-800">You're within our service area</p>
+                    <p className="text-xs text-emerald-700 mt-0.5">
+                      Estimated {drivingMinutes} min drive — no location surcharge applies.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {locationStatus === 'surcharge' && drivingMinutes !== null && (
+                <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-medium text-amber-800">Location surcharge applies</p>
+                    <p className="text-xs text-amber-700 mt-0.5">
+                      Estimated {drivingMinutes} min drive — a £14 surcharge will be added to your booking.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {locationStatus === 'denied' && (
+                <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                  <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-red-700">
+                    Location access was denied. Please allow location access in your browser settings and try again.
+                  </p>
+                </div>
+              )}
+
+              {locationStatus === 'error' && (
+                <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                  <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-red-700">
+                    Couldn't get your location. Please try again or contact us if the issue persists.
+                  </p>
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
 
