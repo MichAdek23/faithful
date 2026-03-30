@@ -12,6 +12,7 @@ import { PricingSection } from "./sections/PricingSection";
 import { ReviewsSection } from "./sections/ReviewsSection";
 import { FAQSection } from "./sections/FAQSection";
 import { FooterSection } from "./sections/FooterSection";
+import { BeforeAfterSection } from "./sections/BeforeAfterSection"; // Import the new section
 import { BookingPage } from "./pages/BookingPage";
 import ViewBookingsPage from "./pages/ViewBookingsPage";
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
@@ -56,6 +57,7 @@ function HomePage() {
       <HowItWorksSection />
       <WhyChooseUsSection />
       <StatisticsSection />
+      <BeforeAfterSection /> {/* Added Before & After section */}
       <ReviewsSection />
       <FAQSection />
       <FooterSection />
