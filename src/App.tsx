@@ -35,7 +35,6 @@ import { BlogPage } from "./pages/BlogPage";
 import { BlogPostPage } from "./pages/BlogPostPage";
 import { AdminBlog } from "./pages/admin/AdminBlog";
 import { AdminBlogEditor } from "./pages/admin/AdminBlogEditor";
-import { Toaster } from "./components/ui/toaster";
 
 function HomePage() {
   useSEO({
@@ -77,7 +76,7 @@ function App() {
   return (
     <AdminAuthProvider>
       <ScrollToTop />
-      <Toaster />
+      
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/book-now" element={<BookingPage />} />
