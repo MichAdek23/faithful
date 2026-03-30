@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Phone, Info, MapPin, Chrome as Home, Building2, MapPinned, Navigation, CheckCircle, AlertTriangle } from 'lucide-react';
+import { User, Mail, Phone, Info, MapPin, Chrome as Home, Building2, MapPinned, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { supabase } from '../../lib/supabase';
@@ -41,33 +41,27 @@ interface DetailsStepProps {
   onBack: () => void;
 }
 
-// Service area coordinates — 23 Chalkdown, Luton, LU2 7FH
-const SERVICE_AREA_LAT = 51.9029;
-const SERVICE_AREA_LNG = -0.3912;
+/**
+ * Postcode area prefixes covered by the standard service area.
+ * Customers with a postcode starting with any of these prefixes will
+ * NOT be charged a location surcharge.
+ */
+const SERVICE_AREA_PREFIXES = ['LU', 'MK', 'SG', 'AL', 'HP', 'WD', 'EN'];
 
 /**
- * Haversine formula — returns straight-line distance in km between two
- * lat/lng points. We convert this to an approximate driving time by
- * assuming an average urban speed of 30 km/h and adding a 1.4x road
- * factor for typical UK urban routes.
+ * Extracts the postcode area prefix (the leading letters) from a UK postcode.
+ * e.g. "LU2 7FH" -> "LU", "SW1A 1AA" -> "SW"
  */
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+function getPostcodePrefix(postcode: string): string {
+  return postcode.trim().toUpperCase().replace(/\d.*$/, '').replace(/[^A-Z]/g, '');
 }
 
-function estimateDrivingMinutes(lat: number, lng: number): number {
-  const straightKm = haversineKm(lat, lng, SERVICE_AREA_LAT, SERVICE_AREA_LNG);
-  // Road factor 1.4x straight-line distance, 30 km/h average urban speed
-  const drivingKm = straightKm * 1.4;
-  return (drivingKm / 30) * 60;
+/**
+ * Returns true if the postcode falls within the no-surcharge service area.
+ */
+function isInServiceArea(postcode: string): boolean {
+  const prefix = getPostcodePrefix(postcode);
+  return SERVICE_AREA_PREFIXES.includes(prefix);
 }
 
 export function DetailsStep({
@@ -91,11 +85,9 @@ export function DetailsStep({
   const [postcode, setPostcode] = useState(postCode || '');
   const [town, setTown] = useState(city || '');
 
-  // Geolocation state
-  const [locationStatus, setLocationStatus] = useState<
-    'idle' | 'checking' | 'surcharge' | 'no_surcharge' | 'denied' | 'error'
-  >('idle');
-  const [drivingMinutes, setDrivingMinutes] = useState<number | null>(null);
+  // Location surcharge status derived from the postcode as the user types
+  // 'idle' = postcode not yet valid, 'in_area' = no surcharge, 'out_of_area' = surcharge applies
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'in_area' | 'out_of_area'>('idle');
 
   const [distance, setDistance] = useState<number>(
     typeof distanceFromServiceArea === 'number' ? distanceFromServiceArea : 0
@@ -104,6 +96,26 @@ export function DetailsStep({
   const [error, setError] = useState('');
   const [isFirstTime, setIsFirstTime] = useState<boolean | null>(null);
   const [checkingEmail, setCheckingEmail] = useState(false);
+
+  // Re-evaluate the surcharge whenever the postcode changes
+  useEffect(() => {
+    const postcodeRegex = /^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$/i;
+    if (!postcodeRegex.test(postcode.replace(/\s/g, ''))) {
+      setLocationStatus('idle');
+      return;
+    }
+    if (isInServiceArea(postcode)) {
+      setLocationStatus('in_area');
+      // Zero out any previously set surcharge distance
+      setDistance(0);
+      onDetailsChange({ distanceFromServiceArea: 0 });
+    } else {
+      setLocationStatus('out_of_area');
+      // Use 999 as a sentinel value — ServiceStep checks > 5 to apply the £14 fee
+      setDistance(999);
+      onDetailsChange({ distanceFromServiceArea: 999 });
+    }
+  }, [postcode]);
 
   useEffect(() => {
     if (!email) {
@@ -125,42 +137,6 @@ export function DetailsStep({
 
     return () => clearTimeout(timeout);
   }, [email]);
-
-  const checkLocation = () => {
-    if (!navigator.geolocation) {
-      setLocationStatus('error');
-      return;
-    }
-
-    setLocationStatus('checking');
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const mins = estimateDrivingMinutes(
-          position.coords.latitude,
-          position.coords.longitude
-        );
-        const roundedMins = Math.round(mins * 10) / 10;
-        setDrivingMinutes(roundedMins);
-        setDistance(roundedMins);
-        onDetailsChange({ distanceFromServiceArea: roundedMins });
-
-        if (roundedMins > 5) {
-          setLocationStatus('surcharge');
-        } else {
-          setLocationStatus('no_surcharge');
-        }
-      },
-      (err) => {
-        if (err.code === err.PERMISSION_DENIED) {
-          setLocationStatus('denied');
-        } else {
-          setLocationStatus('error');
-        }
-      },
-      { timeout: 10000, maximumAge: 60000 }
-    );
-  };
 
   const handleNext = () => {
     if (!name || !email || !phone || !houseNum || !street || !postcode || !town) {
@@ -317,6 +293,24 @@ export function DetailsStep({
                   }}
                   className="h-12"
                 />
+
+                {/* Postcode area surcharge indicator — updates as user types */}
+                {locationStatus === 'in_area' && (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                    <p className="text-xs text-emerald-700 font-medium">
+                      Within service area — no surcharge
+                    </p>
+                  </div>
+                )}
+                {locationStatus === 'out_of_area' && (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                    <p className="text-xs text-amber-700 font-medium">
+                      Outside service area — £14 surcharge applies
+                    </p>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
@@ -336,82 +330,16 @@ export function DetailsStep({
               </div>
             </div>
 
-            {/* Location surcharge checker */}
-            <div className="mt-2 rounded-xl border border-gray-200 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-[#1E90FF]" />
-                  <span className="text-sm font-medium text-gray-700">Location surcharge check</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={checkLocation}
-                  disabled={locationStatus === 'checking'}
-                  className="flex items-center gap-1.5 text-xs font-medium text-white bg-[#1E90FF] hover:bg-[#1873CC] disabled:opacity-60 px-3 py-1.5 rounded-lg transition-colors"
-                >
-                  <Navigation className="w-3.5 h-3.5" />
-                  {locationStatus === 'checking'
-                    ? 'Checking…'
-                    : locationStatus === 'idle'
-                    ? 'Check my location'
-                    : 'Recheck'}
-                </button>
+            {/* Service area info banner */}
+            <div className="rounded-xl border border-gray-200 p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-[#1E90FF]" />
+                <span className="text-sm font-medium text-gray-700">Service area coverage</span>
               </div>
-
-              {locationStatus === 'idle' && (
-                <p className="text-xs text-gray-500">
-                  Tap the button to automatically check if a £14 location surcharge applies to your address.
-                </p>
-              )}
-
-              {locationStatus === 'checking' && (
-                <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <span className="inline-block w-3 h-3 border-2 border-[#1E90FF] border-t-transparent rounded-full animate-spin" />
-                  Getting your location…
-                </div>
-              )}
-
-              {locationStatus === 'no_surcharge' && drivingMinutes !== null && (
-                <div className="flex items-start gap-2 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-                  <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-xs font-medium text-emerald-800">You're within our service area</p>
-                    <p className="text-xs text-emerald-700 mt-0.5">
-                      Estimated {drivingMinutes} min drive — no location surcharge applies.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {locationStatus === 'surcharge' && drivingMinutes !== null && (
-                <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-xs font-medium text-amber-800">Location surcharge applies</p>
-                    <p className="text-xs text-amber-700 mt-0.5">
-                      Estimated {drivingMinutes} min drive — a £14 surcharge will be added to your booking.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {locationStatus === 'denied' && (
-                <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg p-3">
-                  <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700">
-                    Location access was denied. Please allow location access in your browser settings and try again.
-                  </p>
-                </div>
-              )}
-
-              {locationStatus === 'error' && (
-                <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg p-3">
-                  <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700">
-                    Couldn't get your location. Please try again or contact us if the issue persists.
-                  </p>
-                </div>
-              )}
+              <p className="text-xs text-gray-500">
+                We cover <span className="font-medium text-gray-700">LU, MK, SG, AL, HP, WD and EN</span> postcode areas at no extra charge.
+                Bookings outside these areas incur a £14 surcharge, applied automatically based on your postcode.
+              </p>
             </div>
 
           </div>
