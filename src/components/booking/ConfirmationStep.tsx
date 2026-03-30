@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, Clock, Sparkles, Car, User, Phone, Tag, Mail, MapPin, Chrome as Home, Star } from 'lucide-react';
+import { Calendar, Clock, Sparkles, Car, User, Phone, Tag, Percent, Mail, MapPin, Chrome as Home, Star } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
@@ -34,6 +34,7 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
   };
 
   const hasDiscount = discountInfo && (
+    discountInfo.firstTimeDiscount > 0 ||
     (discountInfo.conditionFees && discountInfo.conditionFees > 0) ||
     (discountInfo.locationSurcharge && discountInfo.locationSurcharge > 0)
   );
@@ -197,7 +198,16 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
                 </div>
               )}
               
-              {/* First-time customer discount removed */}
+              {/* First-time customer discount */}
+              {discountInfo.isFirstTime && discountInfo.firstTimeDiscount > 0 && (
+                <div className="flex justify-between text-sm text-emerald-600">
+                  <span className="flex items-center gap-1">
+                    <Percent className="w-3 h-3" />
+                    First-time customer discount (15%):
+                  </span>
+                  <span className="font-medium">-£{discountInfo.firstTimeDiscount.toFixed(2)}</span>
+                </div>
+              )}
               
               <div className="flex justify-between pt-2 border-t border-gray-200">
                 <span className="font-semibold text-gray-900">Total to Pay:</span>
