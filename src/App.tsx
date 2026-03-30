@@ -12,6 +12,7 @@ import { PricingSection } from "./sections/PricingSection";
 import { ReviewsSection } from "./sections/ReviewsSection";
 import { FAQSection } from "./sections/FAQSection";
 import { FooterSection } from "./sections/FooterSection";
+import { BeforeAfterSection } from "./sections/BeforeAfterSection"; // Import the new section
 import { BookingPage } from "./pages/BookingPage";
 import ViewBookingsPage from "./pages/ViewBookingsPage";
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
@@ -34,6 +35,7 @@ import { BlogPage } from "./pages/BlogPage";
 import { BlogPostPage } from "./pages/BlogPostPage";
 import { AdminBlog } from "./pages/admin/AdminBlog";
 import { AdminBlogEditor } from "./pages/admin/AdminBlogEditor";
+import { Toaster } from "./components/ui/toaster";
 
 function HomePage() {
   useSEO({
@@ -55,6 +57,7 @@ function HomePage() {
       <HowItWorksSection />
       <WhyChooseUsSection />
       <StatisticsSection />
+      <BeforeAfterSection /> {/* Added Before & After section */}
       <ReviewsSection />
       <FAQSection />
       <FooterSection />
@@ -74,6 +77,7 @@ function App() {
   return (
     <AdminAuthProvider>
       <ScrollToTop />
+      <Toaster />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/book-now" element={<BookingPage />} />
