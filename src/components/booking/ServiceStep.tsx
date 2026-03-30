@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Droplet, Sparkles, Gem, Plus, Trash2, Gift, Calendar, Star, Tag, Percent, CreditCard, CircleCheck as CheckCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Droplet, Sparkles, Gem, Plus, Trash2, Gift, Calendar, Star, Tag, Percent, CreditCard, CircleCheck as CheckCircle, MapPin, AlertTriangle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { supabase } from '../../lib/supabase';
 import type { CarEntry, BookingData } from '../../pages/BookingPage';
@@ -17,9 +17,14 @@ interface ServiceStepProps {
 interface DiscountInfo {
   isFirstTime: boolean;
   firstTimeDiscount: number;
-  multiCarDiscount: number;
   originalTotal: number;
   finalTotal: number;
+}
+
+interface AdditionalCharges {
+  travelFee: number;
+  dirtinessFee: number;
+  total: number;
 }
 
 const services = [
@@ -71,7 +76,6 @@ const services = [
   }
 ];
 
-// Simplified: No vehicle type variations - single price for all vehicles
 const getPrice = (serviceName: string): number => {
   const service = services.find(s => s.name === serviceName);
   return service?.price || 0;
@@ -112,23 +116,15 @@ const hasRecentPremiumService = async (email?: string, phone?: string): Promise<
 
 function calculateDiscounts(cars: CarEntry[], isFirstTime: boolean): DiscountInfo {
   const originalTotal = cars.reduce((sum, c) => sum + c.servicePrice, 0);
-  let multiCarDiscount = 0;
-  let afterMultiCar = originalTotal;
-
-  if (cars.length >= 5) {
-    const cheapest = Math.min(...cars.map(c => c.servicePrice));
-    multiCarDiscount = cheapest;
-    afterMultiCar = originalTotal - cheapest;
-  }
-
+  
   let firstTimeDiscount = 0;
   if (isFirstTime) {
-    firstTimeDiscount = Math.round(afterMultiCar * 0.15 * 100) / 100;
+    firstTimeDiscount = Math.round(originalTotal * 0.15 * 100) / 100;
   }
 
-  const finalTotal = Math.max(0, afterMultiCar - firstTimeDiscount);
+  const finalTotal = Math.max(0, originalTotal - firstTimeDiscount);
 
-  return { isFirstTime, firstTimeDiscount, multiCarDiscount, originalTotal, finalTotal };
+  return { isFirstTime, firstTimeDiscount, originalTotal, finalTotal };
 }
 
 export function ServiceStep({ 
@@ -142,19 +138,23 @@ export function ServiceStep({
 }: ServiceStepProps) {
   const [localCars, setLocalCars] = useState<CarEntry[]>(() => {
     if (cars.length > 0) return cars;
-    // Set default vehicle type to satisfy CarEntry type
     return [{ id: generateId(), serviceType: '', servicePrice: 0, vehicleType: 'Car' }];
   });
-  const [expandedCarIndex, setExpandedCarIndex] = useState(
+  const [expandedCarIndex, setExpandedCarIndex] = useState<number>(
     cars.length > 0 && cars.every(c => c.serviceType) ? -1 : 0
   );
   const [maintenancePlanWarning, setMaintenancePlanWarning] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [isFirstTime, setIsFirstTime] = useState<boolean | null>(null);
+  const [additionalCharges, setAdditionalCharges] = useState<AdditionalCharges>({
+    travelFee: 0,
+    dirtinessFee: 0,
+    total: 0
+  });
 
-  // Check if user is first time customer when email is available
-  useState(() => {
+  // Check if user is first time customer
+  useEffect(() => {
     if (userEmail) {
       const checkFirstTime = async () => {
         const { count } = await supabase
@@ -165,7 +165,23 @@ export function ServiceStep({
       };
       checkFirstTime();
     }
-  });
+  }, [userEmail]);
+
+  // Get additional charges from bookingData
+  useEffect(() => {
+    const travelFee = (bookingData as any).travelFee || 0;
+    const dirtinessLevel = (bookingData as any).dirtinessLevel;
+    
+    let dirtinessFee = 0;
+    if (dirtinessLevel === 'medium') dirtinessFee = 3;
+    if (dirtinessLevel === 'very') dirtinessFee = 5;
+    
+    setAdditionalCharges({
+      travelFee,
+      dirtinessFee,
+      total: travelFee + dirtinessFee
+    });
+  }, [bookingData]);
 
   const updateCar = (index: number, updates: Partial<CarEntry>) => {
     const updated = localCars.map((car, i) => (i === index ? { ...car, ...updates } : car));
@@ -174,12 +190,11 @@ export function ServiceStep({
   };
 
   const addCar = () => {
-    // Add default vehicle type to satisfy CarEntry type
     const newCar: CarEntry = { 
       id: generateId(), 
       serviceType: '', 
       servicePrice: 0, 
-      vehicleType: 'Car' // Default vehicle type
+      vehicleType: 'Car'
     };
     const updated = [...localCars, newCar];
     setLocalCars(updated);
@@ -201,7 +216,6 @@ export function ServiceStep({
   const handleServiceSelect = async (index: number, serviceName: string) => {
     const price = getPrice(serviceName);
     
-    // Check Maintenance Plan eligibility
     if (serviceName === 'Maintenance Plan – £45/month') {
       const hasPremium = await hasRecentPremiumService(userEmail, userPhone);
       if (!hasPremium) {
@@ -219,10 +233,9 @@ export function ServiceStep({
     (car) => car.serviceType && car.servicePrice > 0
   );
 
-  const carsUntilFree = Math.max(0, 5 - localCars.length);
-  
-  // Calculate discounts
+  const serviceTotal = localCars.reduce((sum, car) => sum + car.servicePrice, 0);
   const discount = calculateDiscounts(localCars, isFirstTime === true);
+  const finalTotal = discount.finalTotal + additionalCharges.total;
 
   const handleConfirmBooking = async () => {
     if (!allCarsComplete) return;
@@ -231,7 +244,6 @@ export function ServiceStep({
     setError('');
 
     try {
-      // Check if time slot is still available
       const { data: bookingCount, error: countError } = await supabase
         .from('bookings')
         .select('id', { count: 'exact', head: true })
@@ -240,9 +252,8 @@ export function ServiceStep({
 
       if (countError) throw countError;
 
-      // Type assertion for the count
-      const count = bookingCount as unknown as { count: number } | null;
-      if (count && count.count >= 3) {
+      const count = bookingCount as unknown as number;
+      if (count >= 3) {
         setError('This time slot is now full. Please go back and select a different time.');
         setIsSubmitting(false);
         return;
@@ -250,26 +261,17 @@ export function ServiceStep({
 
       const groupId = crypto.randomUUID();
       const primaryBookingCode = generateBookingCode();
-      const cheapestPrice = localCars.length >= 5 ? Math.min(...localCars.map(c => c.servicePrice)) : 0;
-      let cheapestUsed = false;
 
       const bookingRows = localCars.map((car, index) => {
         let discountAmount = 0;
         let discountType: string | null = null;
 
-        const isCheapest = localCars.length >= 5 && !cheapestUsed && car.servicePrice === cheapestPrice;
-        if (isCheapest) {
-          cheapestUsed = true;
-          discountAmount = car.servicePrice;
-          discountType = 'multi_car_free';
-        }
-
-        const remainingPrice = car.servicePrice - discountAmount;
-        let firstTimeAmt = 0;
+        let remainingPrice = car.servicePrice;
+        
         if (isFirstTime && remainingPrice > 0) {
-          firstTimeAmt = Math.round(remainingPrice * 0.15 * 100) / 100;
+          const firstTimeAmt = Math.round(remainingPrice * 0.15 * 100) / 100;
           discountAmount += firstTimeAmt;
-          discountType = discountType ? `${discountType}+first_time` : 'first_time';
+          discountType = 'first_time';
         }
 
         const finalPrice = Math.max(0, Math.round((car.servicePrice - discountAmount) * 100) / 100);
@@ -293,6 +295,9 @@ export function ServiceStep({
           status: 'pending',
           discount_amount: discountAmount,
           discount_type: discountType,
+          travel_fee: additionalCharges.travelFee,
+          dirtiness_fee: additionalCharges.dirtinessFee,
+          dirtiness_level: (bookingData as any).dirtinessLevel,
         };
       });
 
@@ -335,11 +340,9 @@ export function ServiceStep({
         }
       }
 
-      // Get environment variables safely
       const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL;
       const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
 
-      // Send email notification if environment variables are available
       if (supabaseUrl && supabaseAnonKey) {
         fetch(`${supabaseUrl}/functions/v1/send-booking-email`, {
           method: 'POST',
@@ -359,7 +362,7 @@ export function ServiceStep({
             booking_date: bookingData.date,
             booking_time: bookingData.time,
             service_type: localCars.length === 1 ? localCars[0].serviceType : `${localCars.length} Cars`,
-            service_price: discount.finalTotal,
+            service_price: finalTotal,
             vehicle_type: localCars.length === 1 ? localCars[0].vehicleType : localCars.map(c => c.vehicleType).join(', '),
             cars: localCars.map(c => ({
               serviceType: c.serviceType,
@@ -369,15 +372,26 @@ export function ServiceStep({
             discount_info: {
               is_first_time: isFirstTime,
               first_time_discount: discount.firstTimeDiscount,
-              multi_car_discount: discount.multiCarDiscount,
               original_total: discount.originalTotal,
               final_total: discount.finalTotal,
             },
+            additional_charges: {
+              travel_fee: additionalCharges.travelFee,
+              dirtiness_fee: additionalCharges.dirtinessFee,
+              total: additionalCharges.total
+            }
           }),
         }).catch(err => console.error('Email send failed:', err));
       }
 
-      onNext(primaryBookingCode, discount);
+      const discountInfo: DiscountInfo = {
+        isFirstTime: isFirstTime === true,
+        firstTimeDiscount: discount.firstTimeDiscount,
+        originalTotal: discount.originalTotal,
+        finalTotal: finalTotal
+      };
+
+      onNext(primaryBookingCode, discountInfo);
     } catch (err) {
       setError('Failed to create booking. Please try again.');
       console.error('Booking error:', err);
@@ -386,7 +400,6 @@ export function ServiceStep({
     }
   };
 
-  // Check if any car has Maintenance Plan selected
   const hasMaintenancePlan = localCars.some(car => car.serviceType === 'Maintenance Plan – £45/month');
 
   return (
@@ -394,20 +407,6 @@ export function ServiceStep({
       <div className="flex items-center gap-3 mb-2">
         <Sparkles className="w-6 h-6 text-gray-700" />
         <h3 className="text-xl font-semibold text-gray-900">Choose Your Service</h3>
-      </div>
-
-      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-4">
-        <div className="flex items-start gap-3">
-          <Gift className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="font-semibold text-emerald-800 text-sm">Book 5 cars, get 1 FREE!</p>
-            <p className="text-xs text-emerald-700 mt-0.5">
-              {localCars.length < 5
-                ? `Add ${carsUntilFree} more car${carsUntilFree !== 1 ? 's' : ''} to unlock this deal. The cheapest car wash will be on us.`
-                : 'Deal unlocked! The cheapest car in your order is FREE.'}
-            </p>
-          </div>
-        </div>
       </div>
 
       {maintenancePlanWarning && (
@@ -449,9 +448,7 @@ export function ServiceStep({
                     </p>
                     {isComplete && (
                       <p className="text-xs text-[#1E90FF] font-semibold">
-                        {localCars.length >= 5 && car.servicePrice === Math.min(...localCars.map(c => c.servicePrice))
-                          ? 'FREE'
-                          : car.serviceType?.includes('month') ? `£${car.servicePrice}/month` : `£${car.servicePrice}`}
+                        {car.serviceType?.includes('month') ? `£${car.servicePrice}/month` : `£${car.servicePrice}`}
                       </p>
                     )}
                   </div>
@@ -499,7 +496,6 @@ export function ServiceStep({
         <span className="font-medium text-sm">Add Another Car</span>
       </button>
 
-      {/* Booking Summary - Now shown here as it's the last step */}
       {allCarsComplete && (
         <div className="border-t pt-6 mt-4">
           <div className="bg-gray-50 rounded-lg p-5">
@@ -518,46 +514,51 @@ export function ServiceStep({
                 <span className="font-medium">{bookingData.time}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Location:</span>
+                <span className="text-gray-600 flex items-center gap-1">
+                  <MapPin className="w-3 h-3" />
+                  Location:
+                </span>
                 <span className="font-medium">{bookingData.postCode}, {bookingData.city}</span>
               </div>
 
               <div className="border-t pt-3 mt-3 space-y-2">
                 <p className="font-medium text-gray-700">Services Selected:</p>
-                {localCars.map((car, i) => {
-                  const isFree = localCars.length >= 5 && car.servicePrice === Math.min(...localCars.map(c => c.servicePrice)) && i === localCars.findIndex(c => c.servicePrice === Math.min(...localCars.map(x => x.servicePrice)));
-                  return (
-                    <div key={car.id} className="flex justify-between items-center pl-2">
-                      <span className="text-gray-600 text-xs sm:text-sm">
-                        Car {i + 1}: {car.serviceType?.replace(' – £' + car.servicePrice, '')} ({car.vehicleType})
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {isFree && (
-                          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">FREE</span>
-                        )}
-                        <span className={`font-medium ${isFree ? 'line-through text-gray-400' : ''}`}>
-                          £{car.servicePrice}
-                          {car.serviceType?.includes('month') && '/mo'}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
+                {localCars.map((car, i) => (
+                  <div key={car.id} className="flex justify-between items-center pl-2">
+                    <span className="text-gray-600 text-xs sm:text-sm">
+                      Car {i + 1}: {car.serviceType?.replace(' – £' + car.servicePrice, '')} ({car.vehicleType})
+                    </span>
+                    <span className="font-medium">
+                      £{car.servicePrice}
+                      {car.serviceType?.includes('month') && '/mo'}
+                    </span>
+                  </div>
+                ))}
               </div>
 
               <div className="border-t pt-3 mt-3 space-y-1.5">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal:</span>
-                  <span className="font-medium">£{discount.originalTotal}</span>
+                  <span className="font-medium">£{serviceTotal}</span>
                 </div>
 
-                {discount.multiCarDiscount > 0 && (
-                  <div className="flex justify-between text-emerald-600">
+                {additionalCharges.travelFee > 0 && (
+                  <div className="flex justify-between text-amber-600">
                     <span className="flex items-center gap-1">
-                      <Tag className="w-3 h-3" />
-                      Multi-car deal (1 free):
+                      <MapPin className="w-3 h-3" />
+                      Travel Fee:
                     </span>
-                    <span className="font-medium">-£{discount.multiCarDiscount}</span>
+                    <span className="font-medium">+£{additionalCharges.travelFee}</span>
+                  </div>
+                )}
+
+                {additionalCharges.dirtinessFee > 0 && (
+                  <div className="flex justify-between text-amber-600">
+                    <span className="flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      Vehicle Condition Fee:
+                    </span>
+                    <span className="font-medium">+£{additionalCharges.dirtinessFee}</span>
                   </div>
                 )}
 
@@ -573,7 +574,7 @@ export function ServiceStep({
 
                 <div className="flex justify-between pt-2 border-t border-gray-300">
                   <span className="text-gray-900 font-semibold">Total to Pay:</span>
-                  <span className="font-bold text-xl text-[#1E90FF]">£{discount.finalTotal.toFixed(2)}</span>
+                  <span className="font-bold text-xl text-[#1E90FF]">£{finalTotal.toFixed(2)}</span>
                 </div>
                 
                 {localCars.some(car => car.serviceType?.includes('month')) && (
@@ -625,7 +626,7 @@ export function ServiceStep({
                 <span className="animate-spin">⏳</span> Processing...
               </span>
             ) : (
-              'Confirm Booking'
+              `Confirm Booking • £${finalTotal.toFixed(2)}`
             )}
           </Button>
         )}
@@ -645,7 +646,7 @@ function CarServiceSelector({
 }) {
   const handleServiceClick = (serviceName: string) => {
     onServiceSelect(serviceName);
-    onClose(); // Auto-close after selection
+    onClose();
   };
 
   return (
@@ -685,7 +686,6 @@ function CarServiceSelector({
                   <p className="text-xs text-gray-500">
                     {service.duration}
                   </p>
-                  {/* Feature preview - show first feature */}
                   <p className="text-xs text-gray-500 mt-1 italic">
                     {service.features[0]}
                   </p>
@@ -696,7 +696,6 @@ function CarServiceSelector({
         })}
       </div>
       
-      {/* Service-specific notes */}
       {car.serviceType === 'Maintenance Plan – £45/month' && (
         <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded-lg">
           Note: One Premium Package must be completed before joining the Maintenance Plan.
