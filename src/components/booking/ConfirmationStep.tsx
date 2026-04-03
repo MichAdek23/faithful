@@ -1,8 +1,6 @@
-import { useState } from 'react';
-import { Calendar, Clock, Sparkles, Car, User, Phone, Tag, Percent, Mail, MapPin, Chrome as Home, Star } from 'lucide-react';
+import { Calendar, Clock, Sparkles, Car, User, Phone, Tag, Percent, Mail, MapPin, Chrome as Home } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
 import type { BookingData, DiscountInfo } from '../../pages/BookingPage';
 
 interface ConfirmationStepProps {
@@ -14,14 +12,6 @@ interface ConfirmationStepProps {
 export function ConfirmationStep({ bookingData, bookingId, discountInfo }: ConfirmationStepProps) {
   const navigate = useNavigate();
   const cars = bookingData.cars || [];
-
-  // Review state
-  const [reviewRating, setReviewRating] = useState(0);
-  const [hoveredRating, setHoveredRating] = useState(0);
-  const [reviewComment, setReviewComment] = useState('');
-  const [reviewSubmitting, setReviewSubmitting] = useState(false);
-  const [reviewSubmitted, setReviewSubmitted] = useState(false);
-  const [reviewError, setReviewError] = useState('');
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -39,35 +29,6 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
     (discountInfo.locationSurcharge && discountInfo.locationSurcharge > 0)
   );
   const isMultiCar = cars.length > 1;
-
-  const submitReview = async () => {
-    if (reviewRating === 0) {
-      setReviewError('Please select a star rating.');
-      return;
-    }
-    if (!reviewComment.trim()) {
-      setReviewError('Please write a short comment.');
-      return;
-    }
-    setReviewError('');
-    setReviewSubmitting(true);
-    // Infer service type from the first car's service for the review label
-    const serviceLabel = cars.length > 0 ? cars[0].serviceType : 'Car Detailing';
-    const { error } = await supabase.from('reviews').insert([{
-      customer_name: bookingData.customerName,
-      service_type: serviceLabel,
-      rating: reviewRating,
-      comment: reviewComment.trim(),
-      status: 'pending',
-      created_at: new Date().toISOString(),
-    }]);
-    setReviewSubmitting(false);
-    if (error) {
-      setReviewError('Something went wrong. Please try again.');
-    } else {
-      setReviewSubmitted(true);
-    }
-  };
 
   return (
     <div className="space-y-8">
@@ -253,69 +214,6 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
           <Clock className="w-4 h-4" />
           <span>Expected confirmation within 30 minutes during business hours</span>
         </div>
-      </div>
-
-      {/* Leave a Review */}
-      <div className="bg-white border-2 border-gray-200 rounded-xl p-6">
-        <h3 className="font-semibold text-gray-900 mb-1">How was your experience?</h3>
-        <p className="text-sm text-gray-500 mb-4">
-          Leave us a quick review — it only takes a second and really helps us out.
-        </p>
-
-        {reviewSubmitted ? (
-          <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-            <Sparkles className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-emerald-800">Thank you for your review!</p>
-              <p className="text-xs text-emerald-700 mt-0.5">It will appear on our site once approved.</p>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {/* Star rating picker */}
-            <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setReviewRating(star)}
-                  onMouseEnter={() => setHoveredRating(star)}
-                  onMouseLeave={() => setHoveredRating(0)}
-                  className="focus:outline-none"
-                >
-                  <Star
-                    className={`w-8 h-8 transition-colors ${
-                      star <= (hoveredRating || reviewRating)
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
-
-            {/* Comment textarea */}
-            <textarea
-              rows={3}
-              placeholder="Share your experience with us..."
-              value={reviewComment}
-              onChange={(e) => setReviewComment(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1E90FF] resize-none"
-            />
-
-            {reviewError && (
-              <p className="text-xs text-red-600">{reviewError}</p>
-            )}
-
-            <Button
-              onClick={submitReview}
-              disabled={reviewSubmitting}
-              className="h-10 bg-[#1E90FF] hover:bg-[#1873CC] text-white px-6"
-            >
-              {reviewSubmitting ? 'Submitting…' : 'Submit Review'}
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Action Buttons */}
