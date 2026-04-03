@@ -431,7 +431,7 @@ export const AdminBookings = () => {
 
   const sendStatusEmail = async (booking: Booking, newStatus: string) => {
     try {
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-status-email`;
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dynamic-task`;
       await fetch(apiUrl, {
         method: "POST",
         headers: {

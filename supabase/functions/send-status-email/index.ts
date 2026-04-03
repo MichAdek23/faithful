@@ -88,6 +88,7 @@ Deno.serve(async (req: Request) => {
     } = data;
 
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    const APP_URL = Deno.env.get("APP_URL") || "https://faithfulautocare.uk";
     if (!RESEND_API_KEY) {
       throw new Error("RESEND_API_KEY is not set");
     }
@@ -104,6 +105,8 @@ Deno.serve(async (req: Request) => {
       month: "long",
       day: "numeric",
     });
+
+    const reviewUrl = `${APP_URL}/book-now?review=true&booking_id=${encodeURIComponent(booking_id)}`;
 
     const emailHtml = `
       <!DOCTYPE html>
@@ -172,8 +175,10 @@ Deno.serve(async (req: Request) => {
               </div>
 
               ${
-                new_status === "washed"
-                  ? `<p>We would love to hear about your experience! If you have a moment, please leave us a review.</p>`
+                (new_status === "washed" || new_status === "completed")
+                  ? `<p>We would love to hear about your experience! If you have a moment, please leave us a review.</p>
+                     <p><a href="${reviewUrl}" style="color:#2563EB;text-decoration:none;font-weight:bold;">Click here to leave a review now</a></p>
+                     <p>If you’d prefer, copy and paste this URL into your browser:<br><small>${reviewUrl}</small></p>`
                   : ""
               }
 

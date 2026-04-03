@@ -6,6 +6,7 @@ import { ServiceStep } from '../components/booking/ServiceStep';
 import { DetailsStep } from '../components/booking/DetailsStep';
 import { ConfirmationStep } from '../components/booking/ConfirmationStep';
 import { FooterSection } from '../sections/FooterSection';
+import { supabase } from '../lib/supabase';
 
 const STORAGE_KEY = 'faithful-booking-draft';
 
@@ -279,6 +280,14 @@ export function BookingPage() {
   });
 
   const [showPopup, setShowPopup] = useState<boolean>(true);
+  const [showReviewPopup, setShowReviewPopup] = useState<boolean>(false);
+  const [reviewBookingId, setReviewBookingId] = useState<string>('');
+  const [reviewRating, setReviewRating] = useState(0);
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [reviewError, setReviewError] = useState('');
   const [isClient, setIsClient] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [bookingData, setBookingData] = useState<Partial<BookingData>>({});
@@ -288,6 +297,13 @@ export function BookingPage() {
   // Initialize state from localStorage only on client side
   useEffect(() => {
     setIsClient(true);
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('review') === 'true') {
+      setShowReviewPopup(true);
+      setReviewBookingId(params.get('booking_id') || '');
+      setShowPopup(false);
+    }
     
     const saved = getSafeLocalStorage(STORAGE_KEY);
     if (saved) {
@@ -351,6 +367,37 @@ export function BookingPage() {
     setShowPopup(false);
   };
 
+  const submitReview = async () => {
+    if (reviewRating === 0) {
+      setReviewError('Please select a star rating.');
+      return;
+    }
+    if (!reviewComment.trim()) {
+      setReviewError('Please write a short comment.');
+      return;
+    }
+
+    setReviewError('');
+    setReviewSubmitting(true);
+
+    const { error } = await supabase.from('reviews').insert([{
+      customer_name: bookingData.customerName || 'Anonymous',
+      service_type: bookingData.cars?.[0]?.serviceType || 'Car Service',
+      rating: reviewRating,
+      comment: reviewComment.trim(),
+      status: 'pending',
+      created_at: new Date().toISOString(),
+    }]);
+
+    setReviewSubmitting(false);
+
+    if (error) {
+      setReviewError('Something went wrong. Please try again.');
+    } else {
+      setReviewSubmitted(true);
+    }
+  };
+
   // Don't render anything until client-side to avoid hydration mismatch
   if (!isClient) {
     return null;
@@ -360,7 +407,60 @@ export function BookingPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Inject animation styles */}
       <style>{animationStyles}</style>
-      
+
+      {/* Review link popup from email */}
+      {showReviewPopup && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="relative bg-white rounded-xl shadow-2xl w-11/12 max-w-lg p-5">
+            <button
+              onClick={() => setShowReviewPopup(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+              aria-label="Close review popup"
+            >
+              ✕
+            </button>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Thank you for choosing Faithful Auto Care</h3>
+            <p className="text-sm text-gray-600 mb-4">Please tell us about your experience and help us improve.</p>
+            <div className="flex gap-1 mb-3">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setReviewRating(star)}
+                  onMouseEnter={() => setHoveredRating(star)}
+                  onMouseLeave={() => setHoveredRating(0)}
+                  className="focus:outline-none"
+                >
+                  <span
+                    className={`text-3xl ${
+                      star <= (hoveredRating || reviewRating) ? 'text-yellow-400' : 'text-gray-300'
+                    }`}
+                  >
+                    ★
+                  </span>
+                </button>
+              ))}
+            </div>
+            <textarea
+              rows={4}
+              placeholder="Share your experience..."
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3 text-sm text-gray-700 focus:ring-2 focus:ring-[#1E90FF] focus:outline-none"
+            />
+            {reviewError && <p className="text-xs text-red-600 mt-2">{reviewError}</p>}
+            {reviewSubmitted && <p className="text-sm text-green-700 mt-2">Thanks! Your review is submitted and pending approval.</p>}
+            <button
+              onClick={submitReview}
+              disabled={reviewSubmitting || reviewSubmitted}
+              className="mt-4 w-full py-2.5 bg-[#1E90FF] hover:bg-[#1873CC] text-white rounded-lg font-medium disabled:opacity-50"
+            >
+              {reviewSubmitting ? 'Submitting…' : reviewSubmitted ? 'Submitted' : 'Send Review'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Enhanced Popup Overlay */}
       {showPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm transition-all duration-300">
