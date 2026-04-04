@@ -469,7 +469,8 @@ Deno.serve(async (req: Request) => {
         },
         body: JSON.stringify({
           from: "Faithful Auto Care <noreply@faithfulautocare.uk>",
-          to: adminEmails,
+          to: ["Faithful Auto Care <noreply@faithfulautocare.uk>"],
+          bcc: adminEmails,
           subject: `New Booking Pending: ${isMultiCar ? `${cars!.length} Cars` : service_type} - ${formattedDate} at ${booking_time}`,
           html: adminEmailHtml,
         }),
