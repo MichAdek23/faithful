@@ -429,7 +429,7 @@ export function BookingPage() {
 
       {/* Review link popup from email */}
       {showReviewPopup && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
           <div className="relative bg-white rounded-xl shadow-2xl w-11/12 max-w-lg p-5">
             <button
               onClick={() => setShowReviewPopup(false)}
