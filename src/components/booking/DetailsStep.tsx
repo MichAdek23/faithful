@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Phone, Info, MapPin, Chrome as Home, Building2, MapPinned, CheckCircle, AlertTriangle } from 'lucide-react';
+import { User, Mail, Phone, Info, MapPin, Chrome as Home, Building2, MapPinned, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { supabase } from '../../lib/supabase';
-// BookingData no longer needed in this component since we moved surcharge logic into ServiceStep
 
 interface DiscountInfo {
   isFirstTime: boolean;
@@ -21,11 +20,6 @@ interface DetailsStepProps {
   streetName?: string;
   postCode?: string;
   city?: string;
-  /**
-   * Optional distance in minutes from the service area. A surcharge will be
-   * applied during the booking if this exceeds five minutes. Undefined or
-   * zero is treated as no surcharge.
-   */
   distanceFromServiceArea?: number;
   onDetailsChange: (data: {
     customerName?: string;
@@ -41,27 +35,69 @@ interface DetailsStepProps {
   onBack: () => void;
 }
 
-/**
- * Postcode area prefixes covered by the standard service area.
- * Customers with a postcode starting with any of these prefixes will
- * NOT be charged a location surcharge.
- */
-const SERVICE_AREA_PREFIXES = ['LU', 'MK', 'SG', 'AL', 'HP', 'WD', 'EN'];
+// Updated service areas to include London postcodes
+const SERVICE_AREA_PREFIXES = ['LU', 'MK', 'SG', 'AL', 'HP', 'WD', 'EN', 'E', 'EC', 'N', 'NW', 'SE', 'SW', 'W', 'WC'];
 
-/**
- * Extracts the postcode area prefix (the leading letters) from a UK postcode.
- * e.g. "LU2 7FH" -> "LU", "SW1A 1AA" -> "SW"
- */
 function getPostcodePrefix(postcode: string): string {
   return postcode.trim().toUpperCase().replace(/\d.*$/, '').replace(/[^A-Z]/g, '');
 }
 
-/**
- * Returns true if the postcode falls within the no-surcharge service area.
- */
 function isInServiceArea(postcode: string): boolean {
   const prefix = getPostcodePrefix(postcode);
-  return SERVICE_AREA_PREFIXES.includes(prefix);
+  
+  // Check if prefix matches any service area
+  // For London prefixes, we need to check if the postcode starts with any of them
+  return SERVICE_AREA_PREFIXES.some(areaPrefix => 
+    prefix === areaPrefix || prefix.startsWith(areaPrefix)
+  );
+}
+
+interface PostcodeLookupResult {
+  postcode: string;
+  city: string;
+  isValid: boolean;
+  error?: string;
+}
+
+async function lookupPostcode(postcode: string): Promise<PostcodeLookupResult> {
+  // Remove spaces and validate format
+  const cleanPostcode = postcode.replace(/\s/g, '').toUpperCase();
+  
+  // Use a free UK postcode API (you can replace with your preferred API)
+  try {
+    // Option 1: Using postcodes.io (free, no API key required)
+    const response = await fetch(`https://api.postcodes.io/postcodes/${cleanPostcode}`);
+    const data = await response.json();
+    
+    if (data.status === 200 && data.result) {
+      // Extract city/town from the result
+      const city = data.result.admin_district || 
+                   data.result.parish || 
+                   data.result.admin_ward ||
+                   data.result.postcode;
+      
+      return {
+        postcode: data.result.postcode,
+        city: city,
+        isValid: true
+      };
+    } else {
+      return {
+        postcode: cleanPostcode,
+        city: '',
+        isValid: false,
+        error: 'Invalid postcode'
+      };
+    }
+  } catch (error) {
+    console.error('Postcode lookup failed:', error);
+    return {
+      postcode: cleanPostcode,
+      city: '',
+      isValid: false,
+      error: 'Failed to validate postcode'
+    };
+  }
 }
 
 export function DetailsStep({
@@ -85,10 +121,7 @@ export function DetailsStep({
   const [postcode, setPostcode] = useState(postCode || '');
   const [town, setTown] = useState(city || '');
 
-  // Location surcharge status derived from the postcode as the user types
-  // 'idle' = postcode not yet valid, 'in_area' = no surcharge, 'out_of_area' = surcharge applies
   const [locationStatus, setLocationStatus] = useState<'idle' | 'in_area' | 'out_of_area'>('idle');
-
   const [distance, setDistance] = useState<number>(
     typeof distanceFromServiceArea === 'number' ? distanceFromServiceArea : 0
   );
@@ -96,26 +129,84 @@ export function DetailsStep({
   const [error, setError] = useState('');
   const [isFirstTime, setIsFirstTime] = useState<boolean | null>(null);
   const [checkingEmail, setCheckingEmail] = useState(false);
+  
+  // Postcode validation states
+  const [validatingPostcode, setValidatingPostcode] = useState(false);
+  const [postcodeValid, setPostcodeValid] = useState(false);
+  const [postcodeError, setPostcodeError] = useState('');
+  const [lookedUpCity, setLookedUpCity] = useState('');
+  const [cityMatchError, setCityMatchError] = useState('');
 
   // Re-evaluate the surcharge whenever the postcode changes
   useEffect(() => {
     const postcodeRegex = /^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$/i;
     if (!postcodeRegex.test(postcode.replace(/\s/g, ''))) {
       setLocationStatus('idle');
+      setPostcodeValid(false);
+      setPostcodeError('');
+      setLookedUpCity('');
+      setCityMatchError('');
       return;
     }
-    if (isInServiceArea(postcode)) {
+    
+    // Validate postcode with API
+    const validatePostcode = async () => {
+      setValidatingPostcode(true);
+      setPostcodeError('');
+      setCityMatchError('');
+      
+      const result = await lookupPostcode(postcode);
+      
+      if (result.isValid) {
+        setPostcodeValid(true);
+        setLookedUpCity(result.city);
+        
+        // If city is already filled, check if it matches
+        if (town && town.toLowerCase() !== result.city.toLowerCase()) {
+          setCityMatchError(`City should be "${result.city}" for this postcode`);
+        } else if (!town) {
+          // Auto-fill the city if empty
+          setTown(result.city);
+          onDetailsChange({ city: result.city });
+        }
+      } else {
+        setPostcodeValid(false);
+        setPostcodeError(result.error || 'Invalid postcode');
+      }
+      
+      setValidatingPostcode(false);
+    };
+    
+    const timeout = setTimeout(validatePostcode, 800);
+    return () => clearTimeout(timeout);
+  }, [postcode]);
+
+  // Check if city matches the looked up postcode city
+  useEffect(() => {
+    if (lookedUpCity && town && postcodeValid) {
+      if (town.toLowerCase() !== lookedUpCity.toLowerCase()) {
+        setCityMatchError(`City should be "${lookedUpCity}" for this postcode`);
+      } else {
+        setCityMatchError('');
+      }
+    } else if (postcodeValid && !town) {
+      setCityMatchError('Please enter the city/town');
+    } else {
+      setCityMatchError('');
+    }
+  }, [town, lookedUpCity, postcodeValid]);
+
+  useEffect(() => {
+    if (postcodeValid && isInServiceArea(postcode)) {
       setLocationStatus('in_area');
-      // Zero out any previously set surcharge distance
       setDistance(0);
       onDetailsChange({ distanceFromServiceArea: 0 });
-    } else {
+    } else if (postcodeValid && !isInServiceArea(postcode)) {
       setLocationStatus('out_of_area');
-      // Use 999 as a sentinel value — ServiceStep checks > 5 to apply the £14 fee
       setDistance(999);
       onDetailsChange({ distanceFromServiceArea: 999 });
     }
-  }, [postcode]);
+  }, [postcode, postcodeValid]);
 
   useEffect(() => {
     if (!email) {
@@ -139,6 +230,7 @@ export function DetailsStep({
   }, [email]);
 
   const handleNext = () => {
+    // Validate all fields
     if (!name || !email || !phone || !houseNum || !street || !postcode || !town) {
       setError('Please fill in all fields');
       return;
@@ -147,6 +239,16 @@ export function DetailsStep({
     const postcodeRegex = /^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$/i;
     if (!postcodeRegex.test(postcode.replace(/\s/g, ''))) {
       setError('Please enter a valid UK postcode');
+      return;
+    }
+
+    if (!postcodeValid) {
+      setError('Please enter a valid postcode');
+      return;
+    }
+
+    if (cityMatchError) {
+      setError(`Please correct the city: ${cityMatchError}`);
       return;
     }
 
@@ -163,7 +265,7 @@ export function DetailsStep({
     onNext();
   };
 
-  const allFieldsFilled = name && email && phone && houseNum && street && postcode && town;
+  const allFieldsFilled = name && email && phone && houseNum && street && postcode && town && postcodeValid && !cityMatchError;
 
   return (
     <div className="space-y-6">
@@ -282,20 +384,44 @@ export function DetailsStep({
                   <MapPinned className="w-4 h-4" />
                   Post Code
                 </label>
-                <Input
-                  type="text"
-                  placeholder="SW1A 1AA"
-                  value={postcode}
-                  onChange={(e) => {
-                    const val = e.target.value.toUpperCase();
-                    setPostcode(val);
-                    onDetailsChange({ postCode: val });
-                  }}
-                  className="h-12"
-                />
+                <div className="relative">
+                  <Input
+                    type="text"
+                    placeholder="SW1A 1AA"
+                    value={postcode}
+                    onChange={(e) => {
+                      const val = e.target.value.toUpperCase();
+                      setPostcode(val);
+                      onDetailsChange({ postCode: val });
+                    }}
+                    className={`h-12 ${validatingPostcode ? 'pr-10' : ''} ${
+                      postcodeError ? 'border-red-300 focus:ring-red-500' : ''
+                    }`}
+                  />
+                  {validatingPostcode && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                    </div>
+                  )}
+                </div>
 
-                {/* Postcode area surcharge indicator — updates as user types */}
-                {locationStatus === 'in_area' && (
+                {/* Postcode validation messages */}
+                {postcodeError && (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <AlertTriangle className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
+                    <p className="text-xs text-red-600 font-medium">{postcodeError}</p>
+                  </div>
+                )}
+
+                {postcodeValid && !postcodeError && (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                    <p className="text-xs text-emerald-600 font-medium">Valid postcode</p>
+                  </div>
+                )}
+
+                {/* Surcharge indicators */}
+                {locationStatus === 'in_area' && postcodeValid && (
                   <div className="flex items-center gap-1.5 mt-2">
                     <CheckCircle className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
                     <p className="text-xs text-emerald-700 font-medium">
@@ -303,7 +429,7 @@ export function DetailsStep({
                     </p>
                   </div>
                 )}
-                {locationStatus === 'out_of_area' && (
+                {locationStatus === 'out_of_area' && postcodeValid && (
                   <div className="flex items-center gap-1.5 mt-2">
                     <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
                     <p className="text-xs text-amber-700 font-medium">
@@ -325,19 +451,33 @@ export function DetailsStep({
                     setTown(e.target.value);
                     onDetailsChange({ city: e.target.value });
                   }}
-                  className="h-12"
+                  className={`h-12 ${
+                    cityMatchError ? 'border-red-300 focus:ring-red-500' : ''
+                  }`}
                 />
+                {cityMatchError && (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <AlertTriangle className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
+                    <p className="text-xs text-red-600 font-medium">{cityMatchError}</p>
+                  </div>
+                )}
+                {postcodeValid && lookedUpCity && !cityMatchError && town && (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                    <p className="text-xs text-emerald-600 font-medium">City matches postcode</p>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Service area info banner */}
+            {/* Service area info banner - Updated to include London */}
             <div className="rounded-xl border border-gray-200 p-4 space-y-2">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-[#1E90FF]" />
                 <span className="text-sm font-medium text-gray-700">Service area coverage</span>
               </div>
               <p className="text-xs text-gray-500">
-                We cover <span className="font-medium text-gray-700">LU, MK, SG, AL, HP, WD and EN</span> postcode areas at no extra charge.
+                We cover <span className="font-medium text-gray-700">All London postcodes (E, EC, N, NW, SE, SW, W, WC) and LU, MK, SG, AL, HP, WD, EN</span> areas at no extra charge.
                 Bookings outside these areas incur a £14 surcharge, applied automatically based on your postcode.
               </p>
             </div>

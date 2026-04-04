@@ -741,14 +741,7 @@ export function ServiceStep({
                 <span className="animate-spin">⏳</span> Processing...
               </span>
             ) : (
-              <span className="flex items-center gap-2">
-                Confirm Booking
-                {sameDayFee > 0 && (
-                  <span className="bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full text-xs font-bold">
-                    +£{sameDayFee}
-                  </span>
-                )}
-              </span>
+              "Confirm Booking"
             )}
           </Button>
         )}
