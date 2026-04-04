@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Droplet, Sparkles, Gem, Plus, Trash2, Calendar, Star, Tag, Percent, CreditCard, CircleCheck as CheckCircle, Info } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -13,27 +13,18 @@ interface ServiceStepProps {
   userEmail?: string;
   userPhone?: string;
   bookingData: BookingData;
+  sameDayFee?: number; // Add sameDayFee prop
 }
 
 interface DiscountInfo {
   isFirstTime: boolean;
   firstTimeDiscount: number;
-  /**
-   * Always zero now that the multi‑car offer has been removed. Kept for
-   * backwards compatibility with other parts of the codebase and email
-   * notifications.
-   */
   multiCarDiscount: number;
   originalTotal: number;
   finalTotal: number;
-  /**
-   * Sum of all condition fees across cars. Included in originalTotal.
-   */
   conditionFees?: number;
-  /**
-   * Location surcharge applied once. Included in originalTotal.
-   */
   locationSurcharge?: number;
+  sameDayFee?: number; // Add sameDayFee to DiscountInfo
 }
 
 const services = [
@@ -126,22 +117,20 @@ const hasRecentPremiumService = async (email?: string, phone?: string): Promise<
 
 /**
  * Computes discount information given the cars selected, whether the user is a first
- * time customer and any location surcharge. The multi‑car discount has been
- * removed, so that field will always be zero. The original total now includes
- * condition fees and the one‑off location surcharge. If the user is first
- * time then 15% of the original total (including surcharges) is deducted.
+ * time customer, any location surcharge, and same-day booking fee.
  */
 function calculateDiscounts(
   cars: CarEntry[],
   isFirstTime: boolean,
-  locationSurcharge: number = 0
+  locationSurcharge: number = 0,
+  sameDayFee: number = 0
 ): DiscountInfo {
   // Sum base service prices and condition fees
   const baseAndCondition = cars.reduce((sum, c) => {
     const conditionFee = c.conditionFee ?? 0;
     return sum + c.servicePrice + conditionFee;
   }, 0);
-  const originalTotal = baseAndCondition + locationSurcharge;
+  const originalTotal = baseAndCondition + locationSurcharge + sameDayFee;
   const multiCarDiscount = 0;
   let firstTimeDiscount = 0;
   if (isFirstTime && originalTotal > 0) {
@@ -158,6 +147,7 @@ function calculateDiscounts(
     finalTotal,
     conditionFees,
     locationSurcharge,
+    sameDayFee,
   };
 }
 
@@ -168,7 +158,8 @@ export function ServiceStep({
   onBack, 
   userEmail, 
   userPhone,
-  bookingData 
+  bookingData,
+  sameDayFee = 0 // Receive sameDayFee from parent
 }: ServiceStepProps) {
   const [localCars, setLocalCars] = useState<CarEntry[]>(() => {
     if (cars.length > 0) return cars;
@@ -192,10 +183,10 @@ export function ServiceStep({
   const [maintenancePlanWarning, setMaintenancePlanWarning] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [isFirstTime, setIsFirstTime] = useState<boolean | null>(null);
+  const [isFirstTime, setIsFirstTime] = useState<boolean>(false); // Changed from null to false
 
   // Check if user is first time customer when email is available
-  useState(() => {
+  useEffect(() => {
     if (userEmail) {
       const checkFirstTime = async () => {
         const { count } = await supabase
@@ -206,7 +197,7 @@ export function ServiceStep({
       };
       checkFirstTime();
     }
-  });
+  }, [userEmail]); // Added dependency array
 
   const updateCar = (index: number, updates: Partial<CarEntry>) => {
     const updated = localCars.map((car, i) => (i === index ? { ...car, ...updates } : car));
@@ -271,8 +262,12 @@ export function ServiceStep({
     locationSurcharge = 14;
   }
 
-  // Calculate discounts (no multi‑car discount) including surcharges
-  const discount = calculateDiscounts(localCars, isFirstTime === true, locationSurcharge);
+  // Calculate discounts including same-day fee
+  const discount = calculateDiscounts(localCars, isFirstTime, locationSurcharge, sameDayFee);
+
+  // Debug log to verify sameDayFee is received
+  console.log('Same day fee in ServiceStep:', sameDayFee);
+  console.log('Discount calculation:', discount);
 
   const handleConfirmBooking = async () => {
     if (!allCarsComplete) return;
@@ -301,14 +296,12 @@ export function ServiceStep({
       const groupId = crypto.randomUUID();
       const primaryBookingCode = generateBookingCode();
 
-      // Build rows for each car. Multi‑car free logic has been removed. Each row
-      // now incorporates any condition fee and the one‑off location surcharge into
-      // the original price. A first‑time discount is applied against that total.
+      // Build rows for each car
       const bookingRows = localCars.map((car, index) => {
         // Base price of service plus condition fee
         const basePrice = car.servicePrice + (car.conditionFee ?? 0);
-        // Add location surcharge once per booking; replicate on each row for convenience
-        const originalPrice = basePrice + locationSurcharge;
+        // Add location surcharge and same-day fee (once per booking)
+        const originalPrice = basePrice + locationSurcharge + sameDayFee;
         let discountAmount = 0;
         let discountType: string | null = null;
         if (isFirstTime && originalPrice > 0) {
@@ -340,6 +333,7 @@ export function ServiceStep({
           vehicle_details: car.vehicleDetails ?? '',
           condition_fee: car.conditionFee ?? 0,
           location_surcharge: locationSurcharge,
+          same_day_fee: sameDayFee, // Store same-day fee in database
         };
       });
 
@@ -423,6 +417,7 @@ export function ServiceStep({
               final_total: discount.finalTotal,
               condition_fees: discount.conditionFees,
               location_surcharge: discount.locationSurcharge,
+              same_day_fee: discount.sameDayFee,
             },
           }),
         }).catch(err => console.error('Email send failed:', err));
@@ -447,7 +442,26 @@ export function ServiceStep({
         <h3 className="text-xl font-semibold text-gray-900">Choose Your Service</h3>
       </div>
 
-      {/* Multi‑car promotional banner removed as the offer is no longer active */}
+      {/* Same-day booking fee notice - More prominent */}
+      {sameDayFee > 0 && (
+        <div className="bg-amber-50 border-2 border-amber-400 rounded-lg p-4 shadow-md">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 bg-amber-100 rounded-full p-2">
+              <Calendar className="w-5 h-5 text-amber-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-base font-bold text-amber-800">⚠️ Same-Day Booking Fee Applied</p>
+              <p className="text-sm text-amber-700 mt-1">
+                You're booking for <span className="font-semibold underline">{bookingData.date}</span> (today)! 
+                An additional <span className="font-bold text-lg">£{sameDayFee}</span> same-day booking fee has been added to your total.
+              </p>
+              <p className="text-xs text-amber-600 mt-2">
+                This fee covers the priority handling of your same-day service request.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {maintenancePlanWarning && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-3">
@@ -488,7 +502,6 @@ export function ServiceStep({
                     </p>
                     {isComplete && (
                       <p className="text-xs text-[#1E90FF] font-semibold">
-                        {/* Display the service price without any multi‑car discount logic. If the service is a monthly subscription, include '/month'. */}
                         {car.serviceType?.includes('month') ? `£${car.servicePrice}/month` : `£${car.servicePrice}`}
                       </p>
                     )}
@@ -519,15 +532,12 @@ export function ServiceStep({
 
               {isExpanded && (
                 <div>
-                  {/* Service selection component */}
                   <CarServiceSelector
                     car={car}
                     onServiceSelect={(serviceName) => handleServiceSelect(index, serviceName)}
                     onClose={() => setExpandedCarIndex(-1)}
                   />
-                  {/* Additional fields for vehicle details and condition */}
                   <div className="p-4 sm:p-6 space-y-4 border-t border-gray-200">
-                    {/* Vehicle details input */}
                     <div>
                       <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                         <Info className="w-4 h-4" />
@@ -541,7 +551,6 @@ export function ServiceStep({
                         className="h-10"
                       />
                     </div>
-                    {/* Vehicle condition selector */}
                     <div>
                       <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                         <Droplet className="w-4 h-4" />
@@ -585,7 +594,7 @@ export function ServiceStep({
         <span className="font-medium text-sm">Add Another Car</span>
       </button>
 
-      {/* Booking Summary - Now shown here as it's the last step */}
+      {/* Booking Summary */}
       {allCarsComplete && (
         <div className="border-t pt-6 mt-4">
           <div className="bg-gray-50 rounded-lg p-5">
@@ -611,7 +620,6 @@ export function ServiceStep({
               <div className="border-t pt-3 mt-3 space-y-2">
                 <p className="font-medium text-gray-700">Services Selected:</p>
                 {localCars.map((car, i) => {
-                  // Compute price including any condition fee (but excluding location surcharge which is shown separately)
                   const perCarTotal = car.servicePrice + (car.conditionFee ?? 0);
                   return (
                     <div key={car.id} className="flex justify-between items-center pl-2">
@@ -630,10 +638,10 @@ export function ServiceStep({
                 })}
               </div>
 
-                <div className="border-t pt-3 mt-3 space-y-1.5">
+              <div className="border-t pt-3 mt-3 space-y-1.5">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal:</span>
-                  <span className="font-medium">£{discount.originalTotal.toFixed(2)}</span>
+                  <span className="font-medium">£{(discount.originalTotal - (discount.sameDayFee || 0) - (discount.locationSurcharge || 0)).toFixed(2)}</span>
                 </div>
 
                 {/* Condition fee summary */}
@@ -655,6 +663,17 @@ export function ServiceStep({
                       Location surcharge:
                     </span>
                     <span className="font-medium">+£{discount.locationSurcharge.toFixed(2)}</span>
+                  </div>
+                )}
+
+                {/* Same-day booking fee summary */}
+                {discount.sameDayFee && discount.sameDayFee > 0 && (
+                  <div className="flex justify-between text-amber-600 font-medium">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      Same-day booking fee:
+                    </span>
+                    <span className="font-medium">+£{discount.sameDayFee.toFixed(2)}</span>
                   </div>
                 )}
 
@@ -715,14 +734,21 @@ export function ServiceStep({
           <Button
             onClick={handleConfirmBooking}
             disabled={isSubmitting}
-            className="flex-1 h-12 bg-[#1E90FF] hover:bg-[#1873CC] text-white"
+            className="flex-1 h-12 bg-[#1E90FF] hover:bg-[#1873CC] text-white font-semibold"
           >
             {isSubmitting ? (
               <span className="flex items-center gap-2">
                 <span className="animate-spin">⏳</span> Processing...
               </span>
             ) : (
-              'Confirm Booking'
+              <span className="flex items-center gap-2">
+                Confirm Booking
+                {sameDayFee > 0 && (
+                  <span className="bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full text-xs font-bold">
+                    +£{sameDayFee}
+                  </span>
+                )}
+              </span>
             )}
           </Button>
         )}
@@ -731,6 +757,7 @@ export function ServiceStep({
   );
 }
 
+// CarServiceSelector component remains the same as before...
 function CarServiceSelector({
   car,
   onServiceSelect,
@@ -742,7 +769,7 @@ function CarServiceSelector({
 }) {
   const handleServiceClick = (serviceName: string) => {
     onServiceSelect(serviceName);
-    onClose(); // Auto-close after selection
+    onClose();
   };
 
   return (
@@ -782,7 +809,6 @@ function CarServiceSelector({
                   <p className="text-xs text-gray-500">
                     {service.duration}
                   </p>
-                  {/* Feature preview - show first feature */}
                   <p className="text-xs text-gray-500 mt-1 italic">
                     {service.features[0]}
                   </p>
@@ -793,7 +819,6 @@ function CarServiceSelector({
         })}
       </div>
       
-      {/* Service-specific notes */}
       {car.serviceType === 'Maintenance Plan – £45/month' && (
         <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded-lg">
           Note: One Premium Package must be completed before joining the Maintenance Plan.

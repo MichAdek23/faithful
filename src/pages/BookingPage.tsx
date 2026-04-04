@@ -70,6 +70,10 @@ export interface BookingData {
    * originates from user input in the details step.
    */
   distanceFromServiceArea?: number;
+  /**
+   * Same-day booking fee (£5 if booking for today)
+   */
+  sameDayFee?: number;
 }
 
 export interface DiscountInfo {
@@ -86,6 +90,10 @@ export interface DiscountInfo {
    * Location surcharge applied once per booking. Included in originalTotal.
    */
   locationSurcharge?: number;
+  /**
+   * Same-day booking fee. Included in originalTotal.
+   */
+  sameDayFee?: number;
 }
 
 // CSS animation keyframes as a string to inject
@@ -293,6 +301,7 @@ export function BookingPage() {
   const [bookingData, setBookingData] = useState<Partial<BookingData>>({});
   const [bookingId, setBookingId] = useState<string>('');
   const [discountInfo, setDiscountInfo] = useState<DiscountInfo | null>(null);
+  const [sameDayFee, setSameDayFee] = useState<number>(0); // Add sameDayFee state
 
   // Initialize state from localStorage only on client side
   useEffect(() => {
@@ -310,7 +319,11 @@ export function BookingPage() {
       try {
         const parsed = JSON.parse(saved);
         if (parsed.step) setCurrentStep(parsed.step);
-        if (parsed.data) setBookingData(parsed.data);
+        if (parsed.data) {
+          setBookingData(parsed.data);
+          // Restore sameDayFee if it exists in saved data
+          if (parsed.data.sameDayFee) setSameDayFee(parsed.data.sameDayFee);
+        }
       } catch (error) {
         console.warn('Failed to parse saved data:', error);
       }
@@ -329,9 +342,9 @@ export function BookingPage() {
   useEffect(() => {
     // Save to localStorage only when on client side and not on confirmation step
     if (isClient && currentStep < 5 && Object.keys(bookingData).length > 0) {
-      setSafeLocalStorage(STORAGE_KEY, JSON.stringify({ step: currentStep, data: bookingData }));
+      setSafeLocalStorage(STORAGE_KEY, JSON.stringify({ step: currentStep, data: { ...bookingData, sameDayFee } }));
     }
-  }, [currentStep, bookingData, isClient]);
+  }, [currentStep, bookingData, sameDayFee, isClient]);
 
   const clearDraft = () => {
     if (isClient) {
@@ -341,6 +354,12 @@ export function BookingPage() {
 
   const updateBookingData = (data: Partial<BookingData>) => {
     setBookingData(prev => ({ ...prev, ...data }));
+  };
+
+  // Handle date selection with same-day fee
+  const handleDateSelect = (date: string, fee?: number) => {
+    updateBookingData({ date });
+    setSameDayFee(fee || 0);
   };
 
   const nextStep = (): void => {
@@ -554,7 +573,7 @@ export function BookingPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <span className="font-medium">Same day service</span>
+                  <span className="font-medium">Same day service (+£5)</span>
                 </div>
               </div>
               <div className="mt-4 pt-4 border-t border-gray-100">
@@ -603,7 +622,7 @@ export function BookingPage() {
             {currentStep === 1 && (
               <DateStep
                 selectedDate={bookingData.date}
-                onDateSelect={(date: string) => updateBookingData({ date })}
+                onDateSelect={handleDateSelect}
                 onNext={nextStep}
               />
             )}
@@ -643,6 +662,7 @@ export function BookingPage() {
                 userEmail={bookingData.customerEmail}
                 userPhone={bookingData.customerPhone}
                 bookingData={bookingData as BookingData}
+                sameDayFee={sameDayFee}
               />
             )}
 
