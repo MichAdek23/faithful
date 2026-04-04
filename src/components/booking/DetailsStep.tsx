@@ -55,6 +55,9 @@ function isInServiceArea(postcode: string): boolean {
 interface PostcodeLookupResult {
   postcode: string;
   city: string;
+  town?: string;
+  adminDistrict?: string;
+  parish?: string;
   isValid: boolean;
   error?: string;
 }
@@ -63,22 +66,21 @@ async function lookupPostcode(postcode: string): Promise<PostcodeLookupResult> {
   // Remove spaces and validate format
   const cleanPostcode = postcode.replace(/\s/g, '').toUpperCase();
   
-  // Use a free UK postcode API (you can replace with your preferred API)
   try {
-    // Option 1: Using postcodes.io (free, no API key required)
+    // Using postcodes.io API
     const response = await fetch(`https://api.postcodes.io/postcodes/${cleanPostcode}`);
     const data = await response.json();
     
     if (data.status === 200 && data.result) {
-      // Extract city/town from the result
-      const city = data.result.admin_district || 
-                   data.result.parish || 
-                   data.result.admin_ward ||
-                   data.result.postcode;
+      // Get the most appropriate location name (preferring town/city over administrative district)
+      const locationName = data.result.postcode;
       
       return {
         postcode: data.result.postcode,
-        city: city,
+        city: data.result.admin_district || data.result.parish || data.result.admin_ward || '',
+        town: data.result.parish || data.result.admin_ward || data.result.admin_district || '',
+        adminDistrict: data.result.admin_district,
+        parish: data.result.parish,
         isValid: true
       };
     } else {
@@ -134,8 +136,10 @@ export function DetailsStep({
   const [validatingPostcode, setValidatingPostcode] = useState(false);
   const [postcodeValid, setPostcodeValid] = useState(false);
   const [postcodeError, setPostcodeError] = useState('');
-  const [lookedUpCity, setLookedUpCity] = useState('');
-  const [cityMatchError, setCityMatchError] = useState('');
+  const [lookedUpLocation, setLookedUpLocation] = useState<PostcodeLookupResult | null>(null);
+  
+  // Track if user has manually edited the city field
+  const [cityManuallyEdited, setCityManuallyEdited] = useState(false);
 
   // Re-evaluate the surcharge whenever the postcode changes
   useEffect(() => {
@@ -144,8 +148,7 @@ export function DetailsStep({
       setLocationStatus('idle');
       setPostcodeValid(false);
       setPostcodeError('');
-      setLookedUpCity('');
-      setCityMatchError('');
+      setLookedUpLocation(null);
       return;
     }
     
@@ -153,25 +156,26 @@ export function DetailsStep({
     const validatePostcode = async () => {
       setValidatingPostcode(true);
       setPostcodeError('');
-      setCityMatchError('');
       
       const result = await lookupPostcode(postcode);
       
       if (result.isValid) {
         setPostcodeValid(true);
-        setLookedUpCity(result.city);
+        setLookedUpLocation(result);
         
-        // If city is already filled, check if it matches
-        if (town && town.toLowerCase() !== result.city.toLowerCase()) {
-          setCityMatchError(`City should be "${result.city}" for this postcode`);
-        } else if (!town) {
-          // Auto-fill the city if empty
-          setTown(result.city);
-          onDetailsChange({ city: result.city });
+        // Only auto-fill if user hasn't manually edited the city field
+        if (!cityManuallyEdited && !town) {
+          // Suggest a default value but don't force it
+          const suggestedCity = result.town || result.city;
+          if (suggestedCity) {
+            setTown(suggestedCity);
+            onDetailsChange({ city: suggestedCity });
+          }
         }
       } else {
         setPostcodeValid(false);
         setPostcodeError(result.error || 'Invalid postcode');
+        setLookedUpLocation(null);
       }
       
       setValidatingPostcode(false);
@@ -181,21 +185,7 @@ export function DetailsStep({
     return () => clearTimeout(timeout);
   }, [postcode]);
 
-  // Check if city matches the looked up postcode city
-  useEffect(() => {
-    if (lookedUpCity && town && postcodeValid) {
-      if (town.toLowerCase() !== lookedUpCity.toLowerCase()) {
-        setCityMatchError(`City should be "${lookedUpCity}" for this postcode`);
-      } else {
-        setCityMatchError('');
-      }
-    } else if (postcodeValid && !town) {
-      setCityMatchError('Please enter the city/town');
-    } else {
-      setCityMatchError('');
-    }
-  }, [town, lookedUpCity, postcodeValid]);
-
+  // Check service area status
   useEffect(() => {
     if (postcodeValid && isInServiceArea(postcode)) {
       setLocationStatus('in_area');
@@ -208,6 +198,7 @@ export function DetailsStep({
     }
   }, [postcode, postcodeValid]);
 
+  // Check first-time customer status
   useEffect(() => {
     if (!email) {
       setIsFirstTime(null);
@@ -229,6 +220,12 @@ export function DetailsStep({
     return () => clearTimeout(timeout);
   }, [email]);
 
+  const handleCityChange = (value: string) => {
+    setCityManuallyEdited(true);
+    setTown(value);
+    onDetailsChange({ city: value });
+  };
+
   const handleNext = () => {
     // Validate all fields
     if (!name || !email || !phone || !houseNum || !street || !postcode || !town) {
@@ -247,9 +244,19 @@ export function DetailsStep({
       return;
     }
 
-    if (cityMatchError) {
-      setError(`Please correct the city: ${cityMatchError}`);
-      return;
+    // Only show a warning, not an error, if city doesn't match the lookup
+    // This makes it more user-friendly
+    if (lookedUpLocation && cityManuallyEdited) {
+      const suggestedCity = lookedUpLocation.town || lookedUpLocation.city;
+      if (suggestedCity && town.toLowerCase() !== suggestedCity.toLowerCase()) {
+        // Just show a confirmation dialog instead of blocking
+        const confirmChange = window.confirm(
+          `The town/city "${town}" doesn't match the postcode's expected location "${suggestedCity}". Do you want to continue with "${town}"?`
+        );
+        if (!confirmChange) {
+          return;
+        }
+      }
     }
 
     onDetailsChange({
@@ -265,7 +272,17 @@ export function DetailsStep({
     onNext();
   };
 
-  const allFieldsFilled = name && email && phone && houseNum && street && postcode && town && postcodeValid && !cityMatchError;
+  const allFieldsFilled = name && email && phone && houseNum && street && postcode && town && postcodeValid;
+
+  // Get suggested location for display
+  const suggestedLocation = lookedUpLocation 
+    ? (lookedUpLocation.town || lookedUpLocation.city)
+    : null;
+  
+  const showLocationSuggestion = suggestedLocation && 
+                                 town && 
+                                 cityManuallyEdited && 
+                                 town.toLowerCase() !== suggestedLocation.toLowerCase();
 
   return (
     <div className="space-y-6">
@@ -445,26 +462,41 @@ export function DetailsStep({
                 </label>
                 <Input
                   type="text"
-                  placeholder="London"
+                  placeholder="e.g., London, Manchester, Birmingham"
                   value={town}
-                  onChange={(e) => {
-                    setTown(e.target.value);
-                    onDetailsChange({ city: e.target.value });
-                  }}
-                  className={`h-12 ${
-                    cityMatchError ? 'border-red-300 focus:ring-red-500' : ''
-                  }`}
+                  onChange={(e) => handleCityChange(e.target.value)}
+                  className="h-12"
                 />
-                {cityMatchError && (
-                  <div className="flex items-center gap-1.5 mt-2">
-                    <AlertTriangle className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
-                    <p className="text-xs text-red-600 font-medium">{cityMatchError}</p>
+                
+                {/* Helpful suggestion when city doesn't match postcode */}
+                {showLocationSuggestion && (
+                  <div className="flex items-start gap-1.5 mt-2 p-2 bg-blue-50 rounded-md">
+                    <Info className="w-3.5 h-3.5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-xs text-blue-700">
+                        This postcode is typically associated with "{suggestedLocation}".
+                      </p>
+                      <button
+                        onClick={() => {
+                          setTown(suggestedLocation);
+                          onDetailsChange({ city: suggestedLocation });
+                          setCityManuallyEdited(false);
+                        }}
+                        className="text-xs text-blue-600 hover:text-blue-800 underline mt-1"
+                      >
+                        Use "{suggestedLocation}" instead
+                      </button>
+                    </div>
                   </div>
                 )}
-                {postcodeValid && lookedUpCity && !cityMatchError && town && (
+
+                {/* Helper text */}
+                {postcodeValid && !showLocationSuggestion && town && (
                   <div className="flex items-center gap-1.5 mt-2">
                     <CheckCircle className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                    <p className="text-xs text-emerald-600 font-medium">City matches postcode</p>
+                    <p className="text-xs text-emerald-600 font-medium">
+                      ✓ Town/City entered
+                    </p>
                   </div>
                 )}
               </div>
