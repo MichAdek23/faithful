@@ -83,6 +83,19 @@ DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_policies 
+    WHERE tablename = 'reviews' AND policyname = 'Anon users can insert reviews'
+  ) THEN
+    CREATE POLICY "Anon users can insert reviews"
+      ON reviews FOR INSERT
+      TO anon
+      WITH CHECK (true);
+  END IF;
+END $$;
+
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
     WHERE tablename = 'reviews' AND policyname = 'Anon users can update reviews'
   ) THEN
     CREATE POLICY "Anon users can update reviews"
