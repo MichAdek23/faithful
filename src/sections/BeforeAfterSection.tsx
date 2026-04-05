@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useEffect } from "react";
 import { Sparkles, Eye } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
@@ -15,44 +15,67 @@ interface BeforeAfterImage {
 const beforeAfterImages: BeforeAfterImage[] = [
   {
     id: 1,
-    before: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=600&h=400&fit=crop", // Dirty car
-    after: "https://images.unsplash.com/photo-1607860108855-64acf2078ed9?w=600&h=400&fit=crop", // Clean car
+    before: "./public/BeforeAfter1.PNG", // Dirty car
+    after: "./public/BeforeAfter2.PNG", // Clean car
     title: "Exterior Paint Correction",
     description: "Removed swirl marks and restored factory shine"
   },
   {
     id: 2,
-    before: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=600&h=400&fit=crop", // Messy interior
-    after: "https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=600&h=400&fit=crop", // Clean interior
+    before: "./public/BeforeAfter3.PNG", // Messy interior
+    after: "./public/BeforeAfter4.PNG", // Clean interior
     title: "Interior Deep Clean",
     description: "Full interior detailing with steam cleaning"
   },
   {
     id: 3,
-    before: "https://images.unsplash.com/photo-1598966739654-5e9a252d8c4f?w=600&h=400&fit=crop", // Foggy headlight
+    before: ".public/BeforeAfter5.jpeg", // Foggy headlight
     after: "https://images.unsplash.com/photo-1607860108855-64acf2078ed9?w=600&h=400&fit=crop", // Clear headlight
     title: "Headlight Restoration",
     description: "Crystal clear visibility restored"
   },
-  {
-    id: 4,
-    before: "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=600&h=400&fit=crop", // Dull paint
-    after: "https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=600&h=400&fit=crop", // Glossy finish
-    title: "Ceramic Coating Application",
-    description: "Long-lasting protection and hydrophobic finish"
-  }
+  
 ];
 
 export const BeforeAfterSection = () => {
   const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation();
   const { ref: titleRef, isVisible: titleVisible } = useScrollAnimation();
-  const { ref: gridRef, isVisible: gridVisible } = useScrollAnimation();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll effect
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    let animationId: number;
+    let scrollPosition = 0;
+    const scrollSpeed = 0.5; // pixels per frame (approx 30px per second at 60fps)
+
+    const scroll = () => {
+      if (!container) return;
+      scrollPosition += scrollSpeed;
+      
+      // Reset when reaching the end for infinite loop effect
+      if (scrollPosition >= container.scrollWidth - container.clientWidth) {
+        scrollPosition = 0;
+      }
+      
+      container.scrollLeft = scrollPosition;
+      animationId = requestAnimationFrame(scroll);
+    };
+
+    animationId = requestAnimationFrame(scroll);
+
+    return () => {
+      if (animationId) cancelAnimationFrame(animationId);
+    };
+  }, []);
 
   return (
     <section 
       ref={sectionRef}
       id="before-after" 
-      className="py-12 sm:py-16 md:py-20 bg-gradient-to-br from-gray-50 to-white"
+      className="py-12 sm:py-16 md:py-20 bg-gradient-to-br from-gray-50 to-white overflow-hidden"
     >
       <div className="container mx-auto px-4 sm:px-6 md:px-12 lg:px-24">
         {/* Section Header */}
@@ -74,53 +97,28 @@ export const BeforeAfterSection = () => {
           </p>
         </div>
 
-        {/* Photo Grid */}
+        {/* Horizontal Scrolling Carousel - One Image Per Card */}
         <div 
-          ref={gridRef}
-          className={`grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 transition-all duration-700 delay-200 ${
-            gridVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-          }`}
+          ref={scrollContainerRef}
+          className="flex gap-6 overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing pb-4"
+          style={{ scrollBehavior: "auto", WebkitOverflowScrolling: "touch" }}
         >
-          {beforeAfterImages.map((image, idx) => (
+          {/* Duplicate images for seamless looping */}
+          {[...beforeAfterImages, ...beforeAfterImages].map((image, idx) => (
             <div
-              key={image.id}
-              className="group bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              key={`${image.id}-${idx}`}
+              className="group bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex-shrink-0 w-[280px] sm:w-[320px] md:w-[350px]"
             >
-              {/* Before & After Side by Side */}
-              <div className="grid grid-cols-2 gap-0">
-                {/* Before Image */}
-                <div className="relative overflow-hidden">
-                  <img
-                    src={image.before}
-                    alt={`Before: ${image.title}`}
-                    className="w-full h-48 sm:h-56 md:h-64 object-cover transition-transform duration-500 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                  <div className="absolute top-3 left-3">
-                    <span className="bg-black/70 text-white px-3 py-1 rounded-lg text-xs font-medium backdrop-blur-sm">
-                      BEFORE
-                    </span>
-                  </div>
-                  {/* Overlay effect on hover */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
-                </div>
-
-                {/* After Image */}
-                <div className="relative overflow-hidden">
-                  <img
-                    src={image.after}
-                    alt={`After: ${image.title}`}
-                    className="w-full h-48 sm:h-56 md:h-64 object-cover transition-transform duration-500 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                  <div className="absolute top-3 right-3">
-                    <span className="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-medium shadow-lg">
-                      AFTER
-                    </span>
-                  </div>
-                  {/* Overlay effect on hover */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
-                </div>
+              {/* Single Image - Using 'after' as the main transformation image */}
+              <div className="relative overflow-hidden">
+                <img
+                  src={image.after}
+                  alt={`${image.title} transformation`}
+                  className="w-full h-56 sm:h-64 md:h-72 object-cover transition-transform duration-500 group-hover:scale-105"
+                  loading="lazy"
+                />
+                {/* Optional subtle gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
 
               {/* Content */}
@@ -147,6 +145,16 @@ export const BeforeAfterSection = () => {
           </button>
         </div>
       </div>
+
+      <style jsx>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </section>
   );
 };
