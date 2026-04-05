@@ -10,34 +10,34 @@ interface BeforeAfterImage {
   description?: string;
 }
 
-
+// Updated image paths - remove "./public/" and just use the filename
+// Place your images in the public folder and reference them directly
 const beforeAfterImages: BeforeAfterImage[] = [
   {
     id: 1,
-    before: "./public/BeforeAfter1.PNG", // Dirty car
-    after: "./public/BeforeAfter2.PNG", // Clean car
+    before: "/BeforeAfter1.PNG", // Dirty car
+    after: "/BeforeAfter2.PNG", // Clean car
     title: "Interior Deep Clean",
     description: "Removed swirl marks and restored factory shine"
   },
   {
     id: 2,
-    before: "./public/BeforeAfter3.PNG", // Messy interior
-    after: "./public/BeforeAfter4.PNG", // Clean interior
+    before: "/BeforeAfter3.PNG", // Messy interior
+    after: "/BeforeAfter4.PNG", // Clean interior
     title: "Interior Deep Clean",
     description: "Full interior detailing with steam cleaning"
   },
   {
     id: 3,
-    before: "./public/BeforeAfter5.jpeg", // Foggy headlight
-    after: "./public/BeforeAfter6.png", // Clear headlight
+    before: "/BeforeAfter5.jpeg", // Foggy headlight
+    after: "/BeforeAfter6.png", // Clear headlight
     title: "Headlight Restoration",
     description: "Crystal clear visibility restored"
   },
-  
 ];
 
 export const BeforeAfterSection = () => {
-  const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation();
+  const { ref: sectionRef } = useScrollAnimation(); // Removed sectionVisible since it's not used
   const { ref: titleRef, isVisible: titleVisible } = useScrollAnimation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -163,6 +163,10 @@ export const BeforeAfterSection = () => {
                   alt={`${image.title} transformation`}
                   className="w-full h-56 sm:h-64 md:h-72 object-cover transition-transform duration-500 group-hover:scale-105"
                   loading="lazy"
+                  onError={(e) => {
+                    console.error(`Failed to load image: ${image.after}`);
+                    e.currentTarget.src = "/fallback-image.jpg"; // Optional: add a fallback image
+                  }}
                 />
                 {/* Subtle gradient overlay on hover */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -172,7 +176,7 @@ export const BeforeAfterSection = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
         }
