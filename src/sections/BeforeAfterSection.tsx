@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import { Sparkles, Eye } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 interface BeforeAfterImage {
@@ -10,14 +10,13 @@ interface BeforeAfterImage {
   description?: string;
 }
 
-// AI-generated placeholder images using placeholder services
-// Replace these with your actual AI-generated images later
+
 const beforeAfterImages: BeforeAfterImage[] = [
   {
     id: 1,
     before: "./public/BeforeAfter1.PNG", // Dirty car
     after: "./public/BeforeAfter2.PNG", // Clean car
-    title: "Exterior Paint Correction",
+    title: "Interior Deep Clean",
     description: "Removed swirl marks and restored factory shine"
   },
   {
@@ -29,8 +28,8 @@ const beforeAfterImages: BeforeAfterImage[] = [
   },
   {
     id: 3,
-    before: ".public/BeforeAfter5.jpeg", // Foggy headlight
-    after: "https://images.unsplash.com/photo-1607860108855-64acf2078ed9?w=600&h=400&fit=crop", // Clear headlight
+    before: "./public/BeforeAfter5.jpeg", // Foggy headlight
+    after: "./public/BeforeAfter6.png", // Clear headlight
     title: "Headlight Restoration",
     description: "Crystal clear visibility restored"
   },
@@ -41,6 +40,7 @@ export const BeforeAfterSection = () => {
   const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation();
   const { ref: titleRef, isVisible: titleVisible } = useScrollAnimation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Auto-scroll effect
   useEffect(() => {
@@ -71,6 +71,44 @@ export const BeforeAfterSection = () => {
     };
   }, []);
 
+  // Handle click zoom effect with sequence: black & white first, then zoom
+  const handleCardClick = (card: HTMLDivElement | null) => {
+    if (!card) return;
+    
+    // Step 1: Apply grayscale first
+    card.style.transition = "filter 0.15s ease";
+    card.style.filter = "grayscale(100%)";
+    
+    // Step 2: After grayscale is applied, add zoom effect
+    setTimeout(() => {
+      if (card) {
+        card.style.transition = "filter 0.15s ease, transform 0.2s ease";
+        card.style.transform = "scale(0.95)";
+      }
+    }, 150);
+    
+    // Step 3: Reset both effects
+    setTimeout(() => {
+      if (card) {
+        card.style.transform = "scale(1)";
+        
+        // Remove grayscale after zoom returns
+        setTimeout(() => {
+          if (card) {
+            card.style.filter = "grayscale(0%)";
+            
+            // Clean up transitions
+            setTimeout(() => {
+              if (card) {
+                card.style.transition = "";
+              }
+            }, 150);
+          }
+        }, 200);
+      }
+    }, 350);
+  };
+
   return (
     <section 
       ref={sectionRef}
@@ -97,7 +135,7 @@ export const BeforeAfterSection = () => {
           </p>
         </div>
 
-        {/* Horizontal Scrolling Carousel - One Image Per Card */}
+        {/* Horizontal Scrolling Carousel - Images Only */}
         <div 
           ref={scrollContainerRef}
           className="flex gap-6 overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing pb-4"
@@ -107,7 +145,16 @@ export const BeforeAfterSection = () => {
           {[...beforeAfterImages, ...beforeAfterImages].map((image, idx) => (
             <div
               key={`${image.id}-${idx}`}
-              className="group bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex-shrink-0 w-[280px] sm:w-[320px] md:w-[350px]"
+              ref={(el) => { cardRefs.current[idx] = el; }}
+              onClick={(e) => handleCardClick(e.currentTarget)}
+              className="group bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex-shrink-0 w-[280px] sm:w-[320px] md:w-[350px] cursor-pointer"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  handleCardClick(e.currentTarget);
+                }
+              }}
             >
               {/* Single Image - Using 'after' as the main transformation image */}
               <div className="relative overflow-hidden">
@@ -117,32 +164,11 @@ export const BeforeAfterSection = () => {
                   className="w-full h-56 sm:h-64 md:h-72 object-cover transition-transform duration-500 group-hover:scale-105"
                   loading="lazy"
                 />
-                {/* Optional subtle gradient overlay */}
+                {/* Subtle gradient overlay on hover */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </div>
-
-              {/* Content */}
-              <div className="p-4 sm:p-5">
-                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
-                  {image.title}
-                </h3>
-                {image.description && (
-                  <p className="text-sm text-gray-500">{image.description}</p>
-                )}
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Optional: View More Button */}
-        <div className="text-center mt-10 sm:mt-12">
-          <button 
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all hover:scale-105 shadow-md hover:shadow-lg"
-            onClick={() => window.location.href = '/gallery'}
-          >
-            <Eye className="w-4 h-4" />
-            View More Transformations
-          </button>
         </div>
       </div>
 
