@@ -1,190 +1,230 @@
-import { useRef, useEffect } from "react";
-import { Sparkles } from "lucide-react";
+import { useRef, useState } from "react";
+import { Sparkles, Images, X } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
-interface BeforeAfterImage {
+interface GalleryImage {
   id: number;
-  before: string;
-  after: string;
-  title: string;
-  description?: string;
+  src: string;
+  category: string;
 }
 
-// Updated image paths - remove "./public/" and just use the filename
-// Place your images in the public folder and reference them directly
-const beforeAfterImages: BeforeAfterImage[] = [
+// Gallery images with categories
+const galleryImages: GalleryImage[] = [
   {
     id: 1,
-    before: "/BeforeAfter1.PNG", // Dirty car
-    after: "/BeforeAfter2.PNG", // Clean car
-    title: "Interior Deep Clean",
-    description: "Removed swirl marks and restored factory shine"
+    src: "/BeforeAfter1.PNG",
+    category: "Interior"
   },
   {
     id: 2,
-    before: "/BeforeAfter3.PNG", // Messy interior
-    after: "/BeforeAfter4.PNG", // Clean interior
-    title: "Interior Deep Clean",
-    description: "Full interior detailing with steam cleaning"
+    src: "/BeforeAfter2.PNG",
+    category: "Interior"
   },
   {
-    id: 3,
-    before: "/BeforeAfter5.jpeg", // Foggy headlight
-    after: "/BeforeAfter6.png", // Clear headlight
-    title: "Headlight Restoration",
-    description: "Crystal clear visibility restored"
+    id: 4,
+    src: "/BeforeAfter4.PNG",
+    category: "Interior"
   },
+  {
+    id: 5,
+    src: "/BeforeAfter5.jpeg",
+    category: "Exterior"
+  },
+ 
 ];
 
-export const BeforeAfterSection = () => {
-  const { ref: sectionRef } = useScrollAnimation(); // Removed sectionVisible since it's not used
+export const PhotoGallerySection = () => {
+  const { ref: sectionRef } = useScrollAnimation();
   const { ref: titleRef, isVisible: titleVisible } = useScrollAnimation();
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string>("All");
+  const [visibleCount, setVisibleCount] = useState(6);
 
-  // Auto-scroll effect
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
+  // Get unique categories
+  const categories = ["All", ...new Set(galleryImages.map(img => img.category))];
 
-    let animationId: number;
-    let scrollPosition = 0;
-    const scrollSpeed = 0.5; // pixels per frame (approx 30px per second at 60fps)
+  // Filter images based on selected category
+  const filteredImages = activeCategory === "All" 
+    ? galleryImages 
+    : galleryImages.filter(img => img.category === activeCategory);
 
-    const scroll = () => {
-      if (!container) return;
-      scrollPosition += scrollSpeed;
-      
-      // Reset when reaching the end for infinite loop effect
-      if (scrollPosition >= container.scrollWidth - container.clientWidth) {
-        scrollPosition = 0;
-      }
-      
-      container.scrollLeft = scrollPosition;
-      animationId = requestAnimationFrame(scroll);
-    };
+  // Get visible images (for "See More" functionality)
+  const visibleImages = filteredImages.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredImages.length;
 
-    animationId = requestAnimationFrame(scroll);
+  const loadMoreImages = () => {
+    setVisibleCount(prev => Math.min(prev + 6, filteredImages.length));
+  };
 
-    return () => {
-      if (animationId) cancelAnimationFrame(animationId);
-    };
-  }, []);
+  const openLightbox = (image: GalleryImage) => {
+    setSelectedImage(image);
+    document.body.style.overflow = "hidden";
+  };
 
-  // Handle click zoom effect with sequence: black & white first, then zoom
-  const handleCardClick = (card: HTMLDivElement | null) => {
-    if (!card) return;
-    
-    // Step 1: Apply grayscale first
-    card.style.transition = "filter 0.15s ease";
-    card.style.filter = "grayscale(100%)";
-    
-    // Step 2: After grayscale is applied, add zoom effect
-    setTimeout(() => {
-      if (card) {
-        card.style.transition = "filter 0.15s ease, transform 0.2s ease";
-        card.style.transform = "scale(0.95)";
-      }
-    }, 150);
-    
-    // Step 3: Reset both effects
-    setTimeout(() => {
-      if (card) {
-        card.style.transform = "scale(1)";
-        
-        // Remove grayscale after zoom returns
-        setTimeout(() => {
-          if (card) {
-            card.style.filter = "grayscale(0%)";
-            
-            // Clean up transitions
-            setTimeout(() => {
-              if (card) {
-                card.style.transition = "";
-              }
-            }, 150);
-          }
-        }, 200);
-      }
-    }, 350);
+  const closeLightbox = () => {
+    setSelectedImage(null);
+    document.body.style.overflow = "auto";
   };
 
   return (
-    <section 
-      ref={sectionRef}
-      id="before-after" 
-      className="py-12 sm:py-16 md:py-20 bg-gradient-to-br from-gray-50 to-white overflow-hidden"
-    >
-      <div className="container mx-auto px-4 sm:px-6 md:px-12 lg:px-24">
-        {/* Section Header */}
-        <div 
-          ref={titleRef}
-          className={`text-center mb-8 sm:mb-12 md:mb-16 transition-all duration-700 ${
-            titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-          }`}
-        >
-          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full mb-4">
-            <Sparkles className="w-4 h-4" />
-            <span className="text-sm font-medium">Our Work</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">
-            Before & After
-          </h2>
-          <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
-            See the transformation we deliver with every service
-          </p>
-        </div>
-
-        {/* Horizontal Scrolling Carousel - Images Only */}
-        <div 
-          ref={scrollContainerRef}
-          className="flex gap-6 overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing pb-4"
-          style={{ scrollBehavior: "auto", WebkitOverflowScrolling: "touch" }}
-        >
-          {/* Duplicate images for seamless looping */}
-          {[...beforeAfterImages, ...beforeAfterImages].map((image, idx) => (
-            <div
-              key={`${image.id}-${idx}`}
-              ref={(el) => { cardRefs.current[idx] = el; }}
-              onClick={(e) => handleCardClick(e.currentTarget)}
-              className="group bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex-shrink-0 w-[280px] sm:w-[320px] md:w-[350px] cursor-pointer"
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  handleCardClick(e.currentTarget);
-                }
-              }}
-            >
-              {/* Single Image - Using 'after' as the main transformation image */}
-              <div className="relative overflow-hidden">
-                <img
-                  src={image.after}
-                  alt={`${image.title} transformation`}
-                  className="w-full h-56 sm:h-64 md:h-72 object-cover transition-transform duration-500 group-hover:scale-105"
-                  loading="lazy"
-                  onError={(e) => {
-                    console.error(`Failed to load image: ${image.after}`);
-                    e.currentTarget.src = "/fallback-image.jpg"; // Optional: add a fallback image
-                  }}
-                />
-                {/* Subtle gradient overlay on hover */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </div>
+    <>
+      <section 
+        ref={sectionRef}
+        id="photo-gallery" 
+        className="py-12 sm:py-16 md:py-20 bg-gradient-to-br from-gray-50 to-white"
+      >
+        <div className="container mx-auto px-4 sm:px-6 md:px-12 lg:px-24">
+          {/* Section Header */}
+          <div 
+            ref={titleRef}
+            className={`text-center mb-8 sm:mb-12 md:mb-16 transition-all duration-700 ${
+              titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+            }`}
+          >
+            <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full mb-4">
+              <Images className="w-4 h-4" />
+              <span className="text-sm font-medium">Our Portfolio</span>
             </div>
-          ))}
-        </div>
-      </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">
+              Photo Gallery
+            </h2>
+            <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
+              Browse through our work and see the quality we deliver
+            </p>
+          </div>
 
+          {/* Category Filters */}
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8 sm:mb-12">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => {
+                  setActiveCategory(category);
+                  setVisibleCount(6); // Reset visible count when changing category
+                }}
+                className={`px-4 sm:px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                  activeCategory === category
+                    ? "bg-blue-600 text-white shadow-lg transform scale-105"
+                    : "bg-white text-gray-600 hover:bg-gray-100 shadow-md"
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
+          {/* Gallery Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {visibleImages.map((image, index) => (
+              <div
+                key={`${image.id}-${index}`}
+                onClick={() => openLightbox(image)}
+                className="group bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    openLightbox(image);
+                  }
+                }}
+              >
+                <div className="relative overflow-hidden h-64">
+                  <img
+                    src={image.src}
+                    alt={`Gallery image ${image.id}`}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    loading="lazy"
+                    onError={(e) => {
+                      console.error(`Failed to load image: ${image.src}`);
+                      e.currentTarget.src = "/fallback-image.jpg";
+                    }}
+                  />
+                  {/* Overlay with category */}
+                  <div className="absolute top-4 left-4">
+                    <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+                      {image.category}
+                    </span>
+                  </div>
+                  {/* Dark gradient overlay on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* See More Photos Button */}
+          {hasMore && (
+            <div className="text-center mt-12">
+              <button
+                onClick={loadMoreImages}
+                className="inline-flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-full font-medium hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                <Images className="w-5 h-5" />
+                See More Photos ({filteredImages.length - visibleCount} more)
+              </button>
+            </div>
+          )}
+
+          {/* Show all loaded message */}
+          {!hasMore && filteredImages.length > 6 && (
+            <div className="text-center mt-12">
+              <p className="text-gray-500 text-sm">
+                You've seen all {filteredImages.length} photos in {activeCategory === "All" ? "our gallery" : activeCategory.toLowerCase()}
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Lightbox Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm animate-fadeIn"
+          onClick={closeLightbox}
+        >
+          <div className="relative max-w-5xl mx-4">
+            {/* Close button */}
+            <button
+              onClick={closeLightbox}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
+              aria-label="Close lightbox"
+            >
+              <X className="w-8 h-8" />
+            </button>
+
+            {/* Image */}
+            <img
+              src={selectedImage.src}
+              alt="Gallery image"
+              className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+
+            {/* Image Info - Category only */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 rounded-b-lg">
+              <span className="inline-block bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+                {selectedImage.category}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add animation styles */}
       <style>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
         }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
+        
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
         }
       `}</style>
-    </section>
+    </>
   );
 };
