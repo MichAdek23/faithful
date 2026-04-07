@@ -53,10 +53,10 @@ function HomePage() {
       <AboutSection />
       <ServicesSection />
       <PricingSection />
+      <PhotoGallerySection /> {/* Updated component usage */}
       <HowItWorksSection />
       <WhyChooseUsSection />
       <StatisticsSection />
-      <PhotoGallerySection /> {/* Updated component usage */}
       <ReviewsSection />
       <FAQSection />
       <FooterSection />
