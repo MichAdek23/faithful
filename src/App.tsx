@@ -35,6 +35,7 @@ import { BlogPage } from "./pages/BlogPage";
 import { BlogPostPage } from "./pages/BlogPostPage";
 import { AdminBlog } from "./pages/admin/AdminBlog";
 import { AdminBlogEditor } from "./pages/admin/AdminBlogEditor";
+import { GallerySection } from "./sections/GallerySection";
 
 function HomePage() {
   useSEO({
@@ -50,11 +51,13 @@ function HomePage() {
     <div className="min-h-screen">
       <HeroSection />
       <FeaturesSection />
+      <GallerySection/>
       <AboutSection />
       <ServicesSection />
       <PricingSection />
-      <PhotoGallerySection /> {/* Updated component usage */}
+      
       <HowItWorksSection />
+      <PhotoGallerySection /> {/* Updated component usage */}
       <WhyChooseUsSection />
       <StatisticsSection />
       <ReviewsSection />

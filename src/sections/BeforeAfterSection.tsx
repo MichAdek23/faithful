@@ -23,14 +23,33 @@ const galleryImages: GalleryImage[] = [
   {
     id: 4,
     src: "/BeforeAfter4.PNG",
-    category: "Interior"
+    category: "tires"
   },
   {
     id: 5,
     src: "/BeforeAfter5.jpeg",
     category: "Exterior"
   },
- 
+  {
+    id: 6,
+    src: "/displaytires.jpeg",
+    category: "Tires"
+  },
+  {
+    id: 7,
+    src: "/ExteriorDisplay.jpeg",
+    category: "Exterior"
+  },
+  {
+    id: 8,
+    src: "/InteriorSection.jpeg",
+    category: "Interior"
+  },
+  {
+    id: 9,
+    src: "/displaytires2.jpeg",
+    category: "Tires"
+  }
 ];
 
 export const PhotoGallerySection = () => {
