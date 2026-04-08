@@ -23,7 +23,7 @@ const galleryImages: GalleryImage[] = [
   {
     id: 4,
     src: "/BeforeAfter4.PNG",
-    category: "tires"
+    category: "Tires"
   },
   {
     id: 5,
