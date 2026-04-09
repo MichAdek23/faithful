@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { Sparkles, Images, X } from "lucide-react";
+import { useState } from "react";
+import { Images, X } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 interface GalleryImage {
