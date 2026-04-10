@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Droplet, Sparkles, Gem, Plus, Trash2, Calendar, Star, Tag, Percent, CreditCard, CircleCheck as CheckCircle, Info } from 'lucide-react';
+import { Droplet, Sparkles, Gem, Plus, Trash2, Calendar, Star, Tag, Percent, CreditCard, CircleCheck as CheckCircle, Info, Truck } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { supabase } from '../../lib/supabase';
@@ -13,7 +13,7 @@ interface ServiceStepProps {
   userEmail?: string;
   userPhone?: string;
   bookingData: BookingData;
-  sameDayFee?: number; // Add sameDayFee prop
+  sameDayFee?: number;
 }
 
 interface DiscountInfo {
@@ -24,10 +24,11 @@ interface DiscountInfo {
   finalTotal: number;
   conditionFees?: number;
   locationSurcharge?: number;
-  sameDayFee?: number; // Add sameDayFee to DiscountInfo
+  sameDayFee?: number;
 }
 
-const services = [
+// Car services
+const carServices = [
   {
     name: 'Basic Package – £25',
     displayName: 'Basic Package',
@@ -35,7 +36,8 @@ const services = [
     description: 'A quick and affordable refresh. Interior OR Exterior clean (not both). Includes paint protection sealant.',
     duration: '1 - 1.5 hrs',
     price: 25,
-    features: ['Interior OR Exterior clean', 'Paint protection sealant', 'Regular upkeep ideal']
+    features: ['Interior OR Exterior clean', 'Paint protection sealant', 'Regular upkeep ideal'],
+    vehicleCategory: 'car'
   },
   {
     name: 'Standard Package – £40',
@@ -44,7 +46,8 @@ const services = [
     description: 'A complete inside-and-out clean. Full interior and exterior cleaning with dashboard wipe, vacuum, and windows.',
     duration: '3 hrs',
     price: 40,
-    features: ['Full interior & exterior', 'Dashboard wipe', 'Vacuum & windows', 'No deep seat cleaning']
+    features: ['Full interior & exterior', 'Dashboard wipe', 'Vacuum & windows', 'No deep seat cleaning'],
+    vehicleCategory: 'car'
   },
   {
     name: 'Premium Package – £55',
@@ -53,7 +56,8 @@ const services = [
     description: 'Enhanced detailing with paint protection. Everything in Standard plus protective sealant.',
     duration: '3 hrs',
     price: 55,
-    features: ['Everything in Standard', 'Paint protection sealant', 'Preserves paint finish']
+    features: ['Everything in Standard', 'Paint protection sealant', 'Preserves paint finish'],
+    vehicleCategory: 'car'
   },
   {
     name: 'Ultimate Package – £120',
@@ -62,7 +66,8 @@ const services = [
     description: 'Top-tier intensive detailing. Deep cleaning of all surfaces with stain remover treatment.',
     duration: '4 - 4.5 hrs',
     price: 120,
-    features: ['Everything in Premium', 'Deep surface cleaning', 'Alloy wheels & windows', 'Stain remover treatment']
+    features: ['Everything in Premium', 'Deep surface cleaning', 'Alloy wheels & windows', 'Stain remover treatment'],
+    vehicleCategory: 'car'
   },
   {
     name: 'Maintenance Plan – £45/month',
@@ -72,14 +77,82 @@ const services = [
     duration: 'Monthly',
     price: 45,
     features: ['Everything in Premium', 'Monthly service', 'Alloy wheel care', 'Requires 1 Premium first'],
-    isSubscription: true
+    isSubscription: true,
+    vehicleCategory: 'car'
   }
 ];
 
-// Simplified: No vehicle type variations - single price for all vehicles
+// Van services (hardcoded)
+const vanServices = [
+  {
+    name: 'Small Van – £50',
+    displayName: 'Small Van Package',
+    icon: Truck,
+    description: 'Perfect for compact vans and small commercial vehicles',
+    duration: '2 - 2.5 hrs',
+    price: 50,
+    features: [
+      'Full exterior wash and hand dry',
+      'Interior vacuum and deep clean',
+      'Dashboard and console cleaning',
+      'Window cleaning inside and out',
+      'Door jambs and hinges cleaned',
+      'Tire dressing and wheel cleaning'
+    ],
+    vehicleCategory: 'van'
+  },
+  {
+    name: 'Medium Van – £65',
+    displayName: 'Medium Van Package',
+    icon: Truck,
+    description: 'Ideal for standard transit vans and medium commercial vehicles',
+    duration: '3 - 3.5 hrs',
+    price: 65,
+    features: [
+      'Everything in Small Van package',
+      'Cargo area deep clean and sanitization',
+      'Floor mat deep cleaning',
+      'Upholstery spot treatment',
+      'Air vent and crevice detailing',
+      'Exterior trim restoration'
+    ],
+    vehicleCategory: 'van'
+  },
+  {
+    name: 'Large Van – £80',
+    displayName: 'Large Van Package',
+    icon: Truck,
+    description: 'Comprehensive service for large vans and high-roof vehicles',
+    duration: '4 - 4.5 hrs',
+    price: 80,
+    features: [
+      'Everything in Medium Van package',
+      'Extended roof and high-reach cleaning',
+      'Heavy-duty cargo area restoration',
+      'Industrial-grade stain removal',
+      'Protective wax application (exterior)',
+      'Interior fabric protection treatment',
+      'Engine bay wipe-down'
+    ],
+    vehicleCategory: 'van'
+  }
+];
+
+// All services combined
+const allServices = [...carServices, ...vanServices];
+
+// Get price based on service name
 const getPrice = (serviceName: string): number => {
-  const service = services.find(s => s.name === serviceName);
+  const service = allServices.find(s => s.name === serviceName);
   return service?.price || 0;
+};
+
+// Get services by vehicle type
+const getServicesByVehicleType = (vehicleType: string) => {
+  if (vehicleType === 'Van') {
+    return vanServices;
+  }
+  return carServices;
 };
 
 function generateId(): string {
@@ -115,17 +188,12 @@ const hasRecentPremiumService = async (email?: string, phone?: string): Promise<
   return !!(data && data.length > 0);
 };
 
-/**
- * Computes discount information given the cars selected, whether the user is a first
- * time customer, any location surcharge, and same-day booking fee.
- */
 function calculateDiscounts(
   cars: CarEntry[],
   isFirstTime: boolean,
   locationSurcharge: number = 0,
   sameDayFee: number = 0
 ): DiscountInfo {
-  // Sum base service prices and condition fees
   const baseAndCondition = cars.reduce((sum, c) => {
     const conditionFee = c.conditionFee ?? 0;
     return sum + c.servicePrice + conditionFee;
@@ -134,7 +202,6 @@ function calculateDiscounts(
   const multiCarDiscount = 0;
   let firstTimeDiscount = 0;
   if (isFirstTime && originalTotal > 0) {
-    // Round to two decimal places to avoid floating point precision issues
     firstTimeDiscount = Math.round(originalTotal * 0.15 * 100) / 100;
   }
   const finalTotal = Math.max(0, originalTotal - firstTimeDiscount);
@@ -159,11 +226,10 @@ export function ServiceStep({
   userEmail, 
   userPhone,
   bookingData,
-  sameDayFee = 0 // Receive sameDayFee from parent
+  sameDayFee = 0
 }: ServiceStepProps) {
   const [localCars, setLocalCars] = useState<CarEntry[]>(() => {
     if (cars.length > 0) return cars;
-    // Provide defaults for a new car including optional fields
     return [
       {
         id: generateId(),
@@ -183,9 +249,8 @@ export function ServiceStep({
   const [maintenancePlanWarning, setMaintenancePlanWarning] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [isFirstTime, setIsFirstTime] = useState<boolean>(false); // Changed from null to false
+  const [isFirstTime, setIsFirstTime] = useState<boolean>(false);
 
-  // Check if user is first time customer when email is available
   useEffect(() => {
     if (userEmail) {
       const checkFirstTime = async () => {
@@ -197,16 +262,24 @@ export function ServiceStep({
       };
       checkFirstTime();
     }
-  }, [userEmail]); // Added dependency array
+  }, [userEmail]);
 
   const updateCar = (index: number, updates: Partial<CarEntry>) => {
-    const updated = localCars.map((car, i) => (i === index ? { ...car, ...updates } : car));
+    const updated = localCars.map((car, i) => 
+      i === index ? { ...car, ...updates } : car
+    );
+    
+    // If vehicle type changes, reset service selection
+    if (updates.vehicleType && updates.vehicleType !== localCars[index].vehicleType) {
+      updated[index].serviceType = '';
+      updated[index].servicePrice = 0;
+    }
+    
     setLocalCars(updated);
     onCarsChange(updated);
   };
 
   const addCar = () => {
-    // Add default vehicle type and optional fields
     const newCar: CarEntry = {
       id: generateId(),
       serviceType: '',
@@ -237,7 +310,6 @@ export function ServiceStep({
   const handleServiceSelect = async (index: number, serviceName: string) => {
     const price = getPrice(serviceName);
     
-    // Check Maintenance Plan eligibility
     if (serviceName === 'Maintenance Plan – £45/month') {
       const hasPremium = await hasRecentPremiumService(userEmail, userPhone);
       if (!hasPremium) {
@@ -255,19 +327,13 @@ export function ServiceStep({
     (car) => car.serviceType && car.servicePrice > 0
   );
 
-  // Determine location surcharge based on the distance supplied in bookingData
   const distanceValue = (bookingData as any).distanceFromServiceArea;
   let locationSurcharge = 0;
   if (typeof distanceValue === 'number' && distanceValue > 5) {
     locationSurcharge = 14;
   }
 
-  // Calculate discounts including same-day fee
   const discount = calculateDiscounts(localCars, isFirstTime, locationSurcharge, sameDayFee);
-
-  // Debug log to verify sameDayFee is received
-  console.log('Same day fee in ServiceStep:', sameDayFee);
-  console.log('Discount calculation:', discount);
 
   const handleConfirmBooking = async () => {
     if (!allCarsComplete) return;
@@ -276,7 +342,6 @@ export function ServiceStep({
     setError('');
 
     try {
-      // Check if time slot is still available
       const { data: bookingCount, error: countError } = await supabase
         .from('bookings')
         .select('id', { count: 'exact', head: true })
@@ -285,7 +350,6 @@ export function ServiceStep({
 
       if (countError) throw countError;
 
-      // Type assertion for the count
       const count = bookingCount as unknown as { count: number } | null;
       if (count && count.count >= 3) {
         setError('This time slot is now full. Please go back and select a different time.');
@@ -296,16 +360,12 @@ export function ServiceStep({
       const groupId = crypto.randomUUID();
       const primaryBookingCode = generateBookingCode();
 
-      // Build rows for each car
       const bookingRows = localCars.map((car, index) => {
-        // Base price of service plus condition fee
         const basePrice = car.servicePrice + (car.conditionFee ?? 0);
-        // Add location surcharge and same-day fee (once per booking)
         const originalPrice = basePrice + locationSurcharge + sameDayFee;
         let discountAmount = 0;
         let discountType: string | null = null;
         if (isFirstTime && originalPrice > 0) {
-          // Apply 15% discount on the original price
           discountAmount = Math.round(originalPrice * 0.15 * 100) / 100;
           discountType = 'first_time';
         }
@@ -333,7 +393,7 @@ export function ServiceStep({
           vehicle_details: car.vehicleDetails ?? '',
           condition_fee: car.conditionFee ?? 0,
           location_surcharge: locationSurcharge,
-          same_day_fee: sameDayFee, // Store same-day fee in database
+          same_day_fee: sameDayFee,
         };
       });
 
@@ -355,7 +415,7 @@ export function ServiceStep({
       if (primaryBooking) {
         const carSummary = localCars.length === 1
           ? `${localCars[0].serviceType} for ${localCars[0].vehicleType}`
-          : `${localCars.length} cars (${localCars.map(c => c.vehicleType).join(', ')})`;
+          : `${localCars.length} vehicles (${localCars.map(c => c.vehicleType).join(', ')})`;
 
         const { data: activeAdmins } = await supabase
           .from('admins')
@@ -376,11 +436,9 @@ export function ServiceStep({
         }
       }
 
-      // Get environment variables safely
       const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL;
       const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
 
-      // Send email notification if environment variables are available
       if (supabaseUrl && supabaseAnonKey) {
         fetch(`${supabaseUrl}/functions/v1/send-booking-email`, {
           method: 'POST',
@@ -399,7 +457,7 @@ export function ServiceStep({
             city: bookingData.city,
             booking_date: bookingData.date,
             booking_time: bookingData.time,
-            service_type: localCars.length === 1 ? localCars[0].serviceType : `${localCars.length} Cars`,
+            service_type: localCars.length === 1 ? localCars[0].serviceType : `${localCars.length} Vehicles`,
             service_price: discount.finalTotal,
             vehicle_type: localCars.length === 1 ? localCars[0].vehicleType : localCars.map(c => c.vehicleType).join(', '),
             cars: localCars.map(c => ({
@@ -432,7 +490,6 @@ export function ServiceStep({
     }
   };
 
-  // Check if any car has Maintenance Plan selected
   const hasMaintenancePlan = localCars.some(car => car.serviceType === 'Maintenance Plan – £45/month');
 
   return (
@@ -442,7 +499,6 @@ export function ServiceStep({
         <h3 className="text-xl font-semibold text-gray-900">Choose Your Service</h3>
       </div>
 
-      {/* Same-day booking fee notice - More prominent */}
       {sameDayFee > 0 && (
         <div className="bg-amber-50 border-2 border-amber-400 rounded-lg p-4 shadow-md">
           <div className="flex items-start gap-3">
@@ -498,7 +554,8 @@ export function ServiceStep({
                   </div>
                   <div className="text-left">
                     <p className="font-medium text-gray-900 text-sm">
-                      {isComplete ? car.serviceType?.replace(' – £' + car.servicePrice, '') || `Car ${index + 1}` : `Car ${index + 1}`}
+                      {car.vehicleType} {index + 1}
+                      {isComplete && ` - ${car.serviceType?.replace(` – £${car.servicePrice}`, '')}`}
                     </p>
                     {isComplete && (
                       <p className="text-xs text-[#1E90FF] font-semibold">
@@ -532,11 +589,46 @@ export function ServiceStep({
 
               {isExpanded && (
                 <div>
+                  {/* Vehicle Type Selection */}
+                  <div className="p-4 sm:p-6 border-b border-gray-200">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-3">
+                      <Info className="w-4 h-4" />
+                      Select Vehicle Type
+                    </label>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => updateCar(index, { vehicleType: 'Car' })}
+                        className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all ${
+                          car.vehicleType === 'Car'
+                            ? 'border-[#1E90FF] bg-blue-50 text-[#1E90FF] font-medium'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        🚗 Car
+                      </button>
+                      <button
+                        onClick={() => updateCar(index, { vehicleType: 'Van' })}
+                        className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all ${
+                          car.vehicleType === 'Van'
+                            ? 'border-[#1E90FF] bg-blue-50 text-[#1E90FF] font-medium'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        🚐 Van
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Service Selection based on Vehicle Type */}
                   <CarServiceSelector
                     car={car}
                     onServiceSelect={(serviceName) => handleServiceSelect(index, serviceName)}
                     onClose={() => setExpandedCarIndex(-1)}
+                    services={getServicesByVehicleType(car.vehicleType)}
+                    vehicleType={car.vehicleType}
                   />
+
+                  {/* Vehicle Details & Condition */}
                   <div className="p-4 sm:p-6 space-y-4 border-t border-gray-200">
                     <div>
                       <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
@@ -545,7 +637,7 @@ export function ServiceStep({
                       </label>
                       <Input
                         type="text"
-                        placeholder="e.g. BMW 3 Series, red"
+                        placeholder={car.vehicleType === 'Van' ? "e.g. Ford Transit, white" : "e.g. BMW 3 Series, red"}
                         value={car.vehicleDetails || ''}
                         onChange={(e) => updateCar(index, { vehicleDetails: e.target.value })}
                         className="h-10"
@@ -561,21 +653,29 @@ export function ServiceStep({
                         onChange={(e) => {
                           const val = e.target.value;
                           let fee = 0;
-                          if (val === 'medium') fee = 3;
-                          if (val === 'very_dirty') fee = 5;
+                          if (val === 'medium') fee = car.vehicleType === 'Van' ? 5 : 3;
+                          if (val === 'very_dirty') fee = car.vehicleType === 'Van' ? 8 : 5;
                           updateCar(index, { vehicleCondition: val, conditionFee: fee });
                         }}
                         className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm text-gray-700 bg-white"
                       >
                         <option value="mild">Mild (no extra)</option>
-                        <option value="medium">Medium (+£3)</option>
-                        <option value="very_dirty">Very dirty (+£5)</option>
+                        <option value="medium">
+                          Medium (+£{car.vehicleType === 'Van' ? '5' : '3'})
+                        </option>
+                        <option value="very_dirty">
+                          Very dirty (+£{car.vehicleType === 'Van' ? '8' : '5'})
+                        </option>
                       </select>
                       {car.vehicleCondition === 'medium' && (
-                        <p className="text-xs text-emerald-600 mt-1">A £3 surcharge will be applied</p>
+                        <p className="text-xs text-emerald-600 mt-1">
+                          A £{car.vehicleType === 'Van' ? '5' : '3'} surcharge will be applied
+                        </p>
                       )}
                       {car.vehicleCondition === 'very_dirty' && (
-                        <p className="text-xs text-emerald-600 mt-1">A £5 surcharge will be applied</p>
+                        <p className="text-xs text-emerald-600 mt-1">
+                          A £{car.vehicleType === 'Van' ? '8' : '5'} surcharge will be applied
+                        </p>
                       )}
                     </div>
                   </div>
@@ -591,10 +691,10 @@ export function ServiceStep({
         className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-[#1E90FF] hover:text-[#1E90FF] hover:bg-blue-50/50 transition-all"
       >
         <Plus className="w-5 h-5" />
-        <span className="font-medium text-sm">Add Another Car</span>
+        <span className="font-medium text-sm">Add Another Vehicle</span>
       </button>
 
-      {/* Booking Summary */}
+      {/* Booking Summary - Rest remains the same */}
       {allCarsComplete && (
         <div className="border-t pt-6 mt-4">
           <div className="bg-gray-50 rounded-lg p-5">
@@ -624,7 +724,7 @@ export function ServiceStep({
                   return (
                     <div key={car.id} className="flex justify-between items-center pl-2">
                       <span className="text-gray-600 text-xs sm:text-sm">
-                        Car {i + 1}: {car.serviceType?.replace(' – £' + car.servicePrice, '')} ({car.vehicleType})
+                        {car.vehicleType} {i + 1}: {car.serviceType?.replace(` – £${car.servicePrice}`, '')}
                         {car.vehicleCondition && car.vehicleCondition !== 'mild' && (
                           <span className="ml-1 text-emerald-600">– {car.vehicleCondition.replace('_', ' ')}</span>
                         )}
@@ -644,7 +744,6 @@ export function ServiceStep({
                   <span className="font-medium">£{(discount.originalTotal - (discount.sameDayFee || 0) - (discount.locationSurcharge || 0)).toFixed(2)}</span>
                 </div>
 
-                {/* Condition fee summary */}
                 {discount.conditionFees && discount.conditionFees > 0 && (
                   <div className="flex justify-between text-emerald-600">
                     <span className="flex items-center gap-1">
@@ -655,7 +754,6 @@ export function ServiceStep({
                   </div>
                 )}
 
-                {/* Location surcharge summary */}
                 {discount.locationSurcharge && discount.locationSurcharge > 0 && (
                   <div className="flex justify-between text-emerald-600">
                     <span className="flex items-center gap-1">
@@ -666,7 +764,6 @@ export function ServiceStep({
                   </div>
                 )}
 
-                {/* Same-day booking fee summary */}
                 {discount.sameDayFee && discount.sameDayFee > 0 && (
                   <div className="flex justify-between text-amber-600 font-medium">
                     <span className="flex items-center gap-1">
@@ -750,15 +847,19 @@ export function ServiceStep({
   );
 }
 
-// CarServiceSelector component remains the same as before...
+// Updated CarServiceSelector to accept dynamic services
 function CarServiceSelector({
   car,
   onServiceSelect,
   onClose,
+  services,
+  vehicleType,
 }: {
   car: CarEntry;
   onServiceSelect: (serviceName: string) => void;
   onClose: () => void;
+  services: typeof carServices;
+  vehicleType: string;
 }) {
   const handleServiceClick = (serviceName: string) => {
     onServiceSelect(serviceName);
@@ -767,7 +868,10 @@ function CarServiceSelector({
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
+      <h4 className="font-medium text-gray-900">
+        Select {vehicleType} Service Package
+      </h4>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {services.map((service) => {
           const Icon = service.icon;
           const isSelected = car.serviceType === service.name;
