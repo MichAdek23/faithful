@@ -112,7 +112,7 @@ const hasRecentPremiumService = async (email?: string, phone?: string): Promise<
   }
 
   const { data } = await query;
-  return (data && data.length > 0);
+  return !!(data && data.length > 0);
 };
 
 /**

@@ -36,6 +36,7 @@ import { BlogPostPage } from "./pages/BlogPostPage";
 import { AdminBlog } from "./pages/admin/AdminBlog";
 import { AdminBlogEditor } from "./pages/admin/AdminBlogEditor";
 import { GallerySection } from "./sections/GallerySection";
+import { VanPricingSection } from "./sections/VanPricingSection";
 
 function HomePage() {
   useSEO({
@@ -55,7 +56,7 @@ function HomePage() {
       <AboutSection />
       <ServicesSection />
       <PricingSection />
-      
+      <VanPricingSection />
       <HowItWorksSection />
       <PhotoGallerySection /> {/* Updated component usage */}
       <WhyChooseUsSection />
