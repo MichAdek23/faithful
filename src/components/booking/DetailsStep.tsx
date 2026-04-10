@@ -35,8 +35,8 @@ interface DetailsStepProps {
   onBack: () => void;
 }
 
-// Updated service areas to include London postcodes
-const SERVICE_AREA_PREFIXES = ['LU', 'MK', 'SG', 'AL', 'HP', 'WD', 'EN', 'E', 'EC', 'N', 'NW', 'SE', 'SW', 'W', 'WC'];
+// Updated service areas - LONDON REMOVED
+const SERVICE_AREA_PREFIXES = ['LU', 'MK', 'SG', 'AL', 'HP', 'WD', 'EN'];
 
 function getPostcodePrefix(postcode: string): string {
   return postcode.trim().toUpperCase().replace(/\d.*$/, '').replace(/[^A-Z]/g, '');
@@ -46,7 +46,6 @@ function isInServiceArea(postcode: string): boolean {
   const prefix = getPostcodePrefix(postcode);
   
   // Check if prefix matches any service area
-  // For London prefixes, we need to check if the postcode starts with any of them
   return SERVICE_AREA_PREFIXES.some(areaPrefix => 
     prefix === areaPrefix || prefix.startsWith(areaPrefix)
   );
@@ -163,7 +162,7 @@ export function DetailsStep({
         setPostcodeValid(true);
         setLookedUpLocation(result);
         
-        // Only auto-fill if user hasn't manually edited the city field
+        // AUTO-SUGGEST LOCATION: Only auto-fill if user hasn't manually edited the city field
         if (!cityManuallyEdited && !town) {
           // Suggest a default value but don't force it
           const suggestedCity = result.town || result.city;
@@ -502,14 +501,14 @@ export function DetailsStep({
               </div>
             </div>
 
-            {/* Service area info banner - Updated to include London */}
+            {/* Service area info banner - London Removed */}
             <div className="rounded-xl border border-gray-200 p-4 space-y-2">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-[#1E90FF]" />
                 <span className="text-sm font-medium text-gray-700">Service area coverage</span>
               </div>
               <p className="text-xs text-gray-500">
-                We cover <span className="font-medium text-gray-700">All London postcodes (E, EC, N, NW, SE, SW, W, WC) and LU, MK, SG, AL, HP, WD, EN</span> areas at no extra charge.
+                We cover <span className="font-medium text-gray-700">LU, MK, SG, AL, HP, WD, EN</span> postcode areas at no extra charge.
                 Bookings outside these areas incur a £14 surcharge, applied automatically based on your postcode.
               </p>
             </div>

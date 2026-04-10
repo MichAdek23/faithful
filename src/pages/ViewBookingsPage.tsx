@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, Search, Calendar, Clock, Sparkles, Car, Tag, CircleCheck as CheckCircle2 } from 'lucide-react';
+import { Mail, Search, Calendar, Clock, Sparkles, Car, Truck, Tag, CircleCheck as CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
@@ -14,12 +14,25 @@ interface Booking {
   booking_time: string;
   service_type: string;
   service_price: number;
+  original_price?: number;
   vehicle_type: string;
   customer_name: string;
   customer_email: string;
   customer_phone: string;
+  house_number?: string;
+  street_name?: string;
+  post_code?: string;
+  city?: string;
   status: string;
   created_at: string;
+  group_id?: string;
+  vehicle_condition?: string;
+  vehicle_details?: string;
+  condition_fee?: number;
+  location_surcharge?: number;
+  same_day_fee?: number;
+  discount_amount?: number;
+  discount_type?: string;
 }
 
 export default function ViewBookingsPage() {
@@ -29,7 +42,7 @@ export default function ViewBookingsPage() {
       "Check the status of your car wash and detailing bookings with Faithful Auto Care. Look up your appointments using your email address.",
     canonical: "/view-bookings",
     keywords:
-      "view car wash booking, check booking status, my appointments, Faithful Auto Care bookings",
+      "view car wash booking, check booking status, my appointments, Faithful Auto Care bookings, van valeting",
   });
 
   const navigate = useNavigate();
@@ -76,6 +89,55 @@ export default function ViewBookingsPage() {
       year: 'numeric'
     });
   };
+
+  const getVehicleIcon = (vehicleType: string) => {
+    return vehicleType === 'Van' ? Truck : Car;
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'washed':
+      case 'completed':
+        return 'bg-blue-50 text-blue-700';
+      case 'confirmed':
+        return 'bg-green-50 text-green-700';
+      case 'cancelled':
+        return 'bg-red-50 text-red-700';
+      case 'pending':
+        return 'bg-yellow-50 text-yellow-700';
+      default:
+        return 'bg-gray-50 text-gray-700';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'washed':
+        return 'Completed';
+      case 'confirmed':
+        return 'Confirmed';
+      case 'cancelled':
+        return 'Cancelled';
+      case 'pending':
+        return 'Pending';
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+  };
+
+  // Group bookings by group_id for multi-vehicle bookings
+  const groupedBookings = bookings.reduce((acc, booking) => {
+    if (booking.group_id) {
+      if (!acc[booking.group_id]) {
+        acc[booking.group_id] = [];
+      }
+      acc[booking.group_id].push(booking);
+    } else {
+      // For single bookings, use booking id as key
+      acc[booking.id] = [booking];
+    }
+    return acc;
+  }, {} as Record<string, Booking[]>);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-50">
@@ -131,7 +193,6 @@ export default function ViewBookingsPage() {
           </div>
         </Card>
 
-
         {hasSearched && !isLoading && (
           <div className="space-y-4">
             {bookings.length === 0 ? (
@@ -156,87 +217,171 @@ export default function ViewBookingsPage() {
               </Card>
             ) : (
               <>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-                  Your Bookings ({bookings.length})
-                </h2>
-                {bookings.map((booking) => (
-                  <Card key={booking.id} className="p-4 sm:p-6 hover:shadow-lg transition-shadow">
-                    <div className="flex flex-col gap-4">
-                      <div className="flex-1">
-                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4">
-                          <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-300 rounded-lg px-3 sm:px-4 py-1.5 sm:py-2">
-                            <div className="flex items-center gap-2">
-                              <Tag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1E90FF]" />
-                              <span className="text-base sm:text-lg font-bold text-[#1E90FF]">
-                                {booking.booking_code}
-                              </span>
-                            </div>
-                          </div>
-                          <div className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${
-                            booking.status === "washed" ? "bg-blue-50 text-blue-700" :
-                            booking.status === "confirmed" ? "bg-green-50 text-green-700" :
-                            booking.status === "cancelled" ? "bg-red-50 text-red-700" :
-                            "bg-yellow-50 text-yellow-700"
-                          }`}>
-                            <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            {booking.status === "washed" ? "Completed" : booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                    Your Bookings ({bookings.length})
+                  </h2>
+                  <p className="text-xs text-gray-500">
+                    {email}
+                  </p>
+                </div>
+
+                {/* Display grouped bookings */}
+                {Object.entries(groupedBookings).map(([groupId, groupBookings]) => {
+                  const primaryBooking = groupBookings[0];
+                  const isMultiVehicle = groupBookings.length > 1;
+                  
+                  return (
+                    <Card key={groupId} className="p-4 sm:p-6 hover:shadow-lg transition-shadow">
+                      {/* Multi-vehicle indicator */}
+                      {isMultiVehicle && (
+                        <div className="mb-4 -mt-2">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-purple-50 text-purple-700 px-3 py-1 rounded-full">
+                            <AlertCircle className="w-3 h-3" />
+                            Multi-Vehicle Booking ({groupBookings.length} vehicles)
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Main booking header with code and status */}
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4">
+                        <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-300 rounded-lg px-3 sm:px-4 py-1.5 sm:py-2">
+                          <div className="flex items-center gap-2">
+                            <Tag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1E90FF]" />
+                            <span className="text-base sm:text-lg font-bold text-[#1E90FF]">
+                              {primaryBooking.booking_code}
+                            </span>
                           </div>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                          <div className="flex items-center gap-3">
-                            <Calendar className="w-5 h-5 text-gray-400" />
-                            <div>
-                              <p className="text-xs text-gray-500">Date</p>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {formatDate(booking.booking_date)}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-3">
-                            <Clock className="w-5 h-5 text-gray-400" />
-                            <div>
-                              <p className="text-xs text-gray-500">Time</p>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {booking.booking_time}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-3">
-                            <Sparkles className="w-5 h-5 text-gray-400" />
-                            <div>
-                              <p className="text-xs text-gray-500">Service</p>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {booking.service_type}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-3">
-                            <Car className="w-5 h-5 text-gray-400" />
-                            <div>
-                              <p className="text-xs text-gray-500">Vehicle</p>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {booking.vehicle_type}
-                              </p>
-                            </div>
-                          </div>
+                        <div className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getStatusColor(primaryBooking.status)}`}>
+                          <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          {getStatusLabel(primaryBooking.status)}
                         </div>
+                        {primaryBooking.discount_type && (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                            {primaryBooking.discount_type === 'first_time' ? '🎉 First-time Discount' : '💰 Discount Applied'}
+                          </span>
+                        )}
                       </div>
 
-                      <div className="flex items-center justify-between pt-3 border-t border-gray-100 sm:border-0 sm:pt-0">
+                      {/* Date, Time, and Location */}
+                      <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 pb-4 border-b border-gray-100">
+                        <div className="flex items-center gap-3">
+                          <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                          <div>
+                            <p className="text-xs text-gray-500">Date</p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {formatDate(primaryBooking.booking_date)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <Clock className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                          <div>
+                            <p className="text-xs text-gray-500">Time</p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {primaryBooking.booking_time}
+                            </p>
+                          </div>
+                        </div>
+
+                        {primaryBooking.street_name && (
+                          <div className="col-span-2 flex items-start gap-3">
+                            <svg className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <div>
+                              <p className="text-xs text-gray-500">Location</p>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {primaryBooking.house_number} {primaryBooking.street_name}, {primaryBooking.city}, {primaryBooking.post_code}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Services list */}
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium text-gray-700">Services:</p>
+                        {groupBookings.map((booking, idx) => {
+                          const VehicleIcon = getVehicleIcon(booking.vehicle_type);
+                          
+                          return (
+                            <div key={booking.id} className="bg-gray-50 rounded-lg p-3">
+                              <div className="flex items-start gap-3">
+                                <VehicleIcon className="w-5 h-5 text-gray-500 flex-shrink-0 mt-0.5" />
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-medium text-gray-900">
+                                      {booking.vehicle_type} {groupBookings.length > 1 ? idx + 1 : ''}
+                                    </span>
+                                    {booking.vehicle_type === 'Van' && (
+                                      <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                                        Commercial
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-gray-700 mt-1">
+                                    {booking.service_type}
+                                  </p>
+                                  {booking.vehicle_details && (
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      Details: {booking.vehicle_details}
+                                    </p>
+                                  )}
+                                  {booking.vehicle_condition && booking.vehicle_condition !== 'mild' && (
+                                    <p className="text-xs text-gray-500">
+                                      Condition: {booking.vehicle_condition.replace('_', ' ')}
+                                      {booking.condition_fee && booking.condition_fee > 0 && (
+                                        <span className="text-emerald-600 ml-1">(+£{booking.condition_fee})</span>
+                                      )}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="text-right">
+                                  <p className="font-semibold text-gray-900">
+                                    £{booking.service_price}
+                                  </p>
+                                  {booking.original_price && booking.original_price > booking.service_price && (
+                                    <p className="text-xs text-gray-400 line-through">
+                                      £{booking.original_price}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Price summary for multi-vehicle bookings */}
+                      {isMultiVehicle && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-700">Total:</span>
+                            <span className="text-xl font-bold text-[#1E90FF]">
+                              £{groupBookings.reduce((sum, b) => sum + (b.service_price || 0), 0).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Footer with created date */}
+                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
                         <p className="text-xs text-gray-500">
-                          Booked on {formatDate(booking.created_at)}
+                          Booked on {formatDate(primaryBooking.created_at)}
                         </p>
-                        <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                          £{booking.service_price}
-                        </p>
+                        {!isMultiVehicle && (
+                          <p className="text-xl sm:text-2xl font-bold text-gray-900">
+                            £{primaryBooking.service_price}
+                          </p>
+                        )}
                       </div>
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  );
+                })}
               </>
             )}
           </div>

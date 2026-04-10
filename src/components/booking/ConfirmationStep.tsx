@@ -1,4 +1,4 @@
-import { Calendar, Clock, Sparkles, Car, User, Phone, Tag, Percent, Mail, MapPin, Chrome as Home } from 'lucide-react';
+import { Calendar, Clock, Sparkles, Car, User, Phone, Tag, Percent, Mail, MapPin, Chrome as Home, Truck } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useNavigate } from 'react-router-dom';
 import type { BookingData, DiscountInfo } from '../../pages/BookingPage';
@@ -23,12 +23,24 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
     });
   };
 
+  // Helper to get vehicle icon based on type
+  const getVehicleIcon = (vehicleType: string) => {
+    return vehicleType === 'Van' ? Truck : Car;
+  };
+
+  // Check if there's a same-day fee
+  const hasSameDayFee = discountInfo?.sameDayFee && discountInfo.sameDayFee > 0;
+  
+  // Check if there are any discounts or additional fees to display
   const hasDiscount = discountInfo && (
     discountInfo.firstTimeDiscount > 0 ||
     (discountInfo.conditionFees && discountInfo.conditionFees > 0) ||
-    (discountInfo.locationSurcharge && discountInfo.locationSurcharge > 0)
+    (discountInfo.locationSurcharge && discountInfo.locationSurcharge > 0) ||
+    hasSameDayFee
   );
+  
   const isMultiCar = cars.length > 1;
+  const hasVans = cars.some(car => car.vehicleType === 'Van');
 
   return (
     <div className="space-y-8">
@@ -95,31 +107,54 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
             <h3 className="font-semibold text-gray-900">
               {isMultiCar ? `Services (${cars.length} vehicles)` : 'Service Selected'}
             </h3>
+            {hasVans && (
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                Includes Van Service
+              </span>
+            )}
           </div>
           <div className="space-y-3">
-          {cars.map((car, index) => {
-              // Price per car includes any condition fee. Location surcharge is displayed separately in the price breakdown.
+            {cars.map((car, index) => {
+              // Price per car includes any condition fee
               const perCarTotal = car.servicePrice + (car.conditionFee ?? 0);
+              const VehicleIcon = getVehicleIcon(car.vehicleType);
+              
               return (
-                <div key={car.id} className="bg-gray-50 rounded-lg p-3">
-                  <div className="flex justify-between items-start mb-1">
+                <div key={car.id} className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
-                      <Car className="w-4 h-4 text-gray-500" />
-                      <span className="font-medium text-gray-900">Vehicle {index + 1}</span>
+                      <VehicleIcon className="w-4 h-4 text-gray-500" />
+                      <span className="font-medium text-gray-900">
+                        {car.vehicleType} {index + 1}
+                      </span>
+                      {car.vehicleType === 'Van' && (
+                        <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded">
+                          Commercial
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-gray-900">
                         £{perCarTotal.toFixed(2)}
                       </span>
+                      {car.serviceType?.includes('month') && (
+                        <span className="text-xs text-gray-500">/month</span>
+                      )}
                     </div>
                   </div>
-                  <p className="text-sm text-gray-700 ml-6">{car.serviceType}</p>
-                  <p className="text-xs text-gray-500 ml-6">Vehicle: {car.vehicleType}</p>
-                  {car.vehicleCondition && car.vehicleCondition !== 'mild' && (
-                    <p className="text-xs text-gray-500 ml-6">Condition: {car.vehicleCondition.replace('_', ' ')}</p>
-                  )}
+                  <p className="text-sm text-gray-700 ml-6">
+                    {car.serviceType?.replace(` – £${car.servicePrice}`, '') || 'Service not selected'}
+                  </p>
                   {car.vehicleDetails && car.vehicleDetails.trim().length > 0 && (
-                    <p className="text-xs text-gray-500 ml-6">Details: {car.vehicleDetails}</p>
+                    <p className="text-xs text-gray-500 ml-6 mt-1">Details: {car.vehicleDetails}</p>
+                  )}
+                  {car.vehicleCondition && car.vehicleCondition !== 'mild' && (
+                    <p className="text-xs text-gray-500 ml-6">
+                      Condition: {car.vehicleCondition.replace('_', ' ')} 
+                      <span className="text-emerald-600 ml-1">
+                        (+£{car.conditionFee})
+                      </span>
+                    </p>
                   )}
                 </div>
               );
@@ -132,9 +167,12 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
           <div className="border-t pt-4">
             <h3 className="font-semibold text-gray-900 mb-3">Price Breakdown</h3>
             <div className="space-y-2 bg-gray-50 rounded-lg p-4">
+              {/* Base subtotal (services only) */}
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Subtotal:</span>
-                <span className="font-medium">£{discountInfo.originalTotal.toFixed(2)}</span>
+                <span className="text-gray-600">Service subtotal:</span>
+                <span className="font-medium">
+                  £{(discountInfo.originalTotal - (discountInfo.sameDayFee || 0) - (discountInfo.locationSurcharge || 0)).toFixed(2)}
+                </span>
               </div>
               
               {/* Condition fees summary */}
@@ -152,19 +190,30 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
               {discountInfo.locationSurcharge && discountInfo.locationSurcharge > 0 && (
                 <div className="flex justify-between text-sm text-emerald-600">
                   <span className="flex items-center gap-1">
-                    <Tag className="w-3 h-3" />
+                    <MapPin className="w-3 h-3" />
                     Location surcharge:
                   </span>
                   <span className="font-medium">+£{discountInfo.locationSurcharge.toFixed(2)}</span>
                 </div>
               )}
+
+              {/* Same-day booking fee */}
+              {discountInfo.sameDayFee && discountInfo.sameDayFee > 0 && (
+                <div className="flex justify-between text-sm text-amber-600">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    Same-day booking fee:
+                  </span>
+                  <span className="font-medium">+£{discountInfo.sameDayFee.toFixed(2)}</span>
+                </div>
+              )}
               
               {/* First-time customer discount */}
               {discountInfo.isFirstTime && discountInfo.firstTimeDiscount > 0 && (
-                <div className="flex justify-between text-sm text-emerald-600">
+                <div className="flex justify-between text-sm text-green-600">
                   <span className="flex items-center gap-1">
                     <Percent className="w-3 h-3" />
-                    First-time customer discount (15%):
+                    First-time discount (15%):
                   </span>
                   <span className="font-medium">-£{discountInfo.firstTimeDiscount.toFixed(2)}</span>
                 </div>
@@ -174,6 +223,11 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
                 <span className="font-semibold text-gray-900">Total to Pay:</span>
                 <span className="font-bold text-xl text-[#1E90FF]">£{discountInfo.finalTotal.toFixed(2)}</span>
               </div>
+
+              {/* Payment note */}
+              <p className="text-xs text-gray-500 text-right mt-1">
+                Payment to be made on the day of service
+              </p>
             </div>
           </div>
         )}
@@ -203,6 +257,22 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
           </div>
         </div>
       </div>
+
+      {/* Van-specific note if applicable */}
+      {hasVans && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
+          <div className="flex items-start gap-3">
+            <Truck className="w-5 h-5 text-blue-600 mt-0.5" />
+            <div>
+              <h4 className="font-semibold text-blue-900">Van Service Information</h4>
+              <p className="text-sm text-blue-700 mt-1">
+                Please ensure the van is accessible and there is adequate space for our equipment. 
+                For commercial vehicles, please remove any valuable items or sensitive materials from the cargo area before our arrival.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* What's Next */}
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-6">
