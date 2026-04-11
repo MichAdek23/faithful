@@ -23,7 +23,7 @@ const galleryImages: GalleryImage[] = [
   {
     id: 4,
     src: "/BeforeAfter4.PNG",
-    category: "Tires"
+    category: "Tyres"
   },
   {
     id: 5,
@@ -33,7 +33,7 @@ const galleryImages: GalleryImage[] = [
   {
     id: 6,
     src: "/displaytires.jpeg",
-    category: "Tires"
+    category: "Tyres"
   },
   {
     id: 7,
@@ -48,7 +48,7 @@ const galleryImages: GalleryImage[] = [
   {
     id: 9,
     src: "/displaytires2.jpeg",
-    category: "Tires"
+    category: "Tyres"
   }
 ];
 

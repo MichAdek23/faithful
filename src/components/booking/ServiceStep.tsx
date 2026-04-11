@@ -30,52 +30,52 @@ interface DiscountInfo {
 // Car services
 const carServices = [
   {
-    name: 'Basic Package – £25',
+    name: 'Basic Package – £15',
     displayName: 'Basic Package',
     icon: Droplet,
     description: 'A quick and affordable refresh. Interior OR Exterior clean (not both). Includes paint protection sealant.',
     duration: '1 - 1.5 hrs',
-    price: 25,
+    price: 15,
     features: ['Interior OR Exterior clean', 'Paint protection sealant', 'Regular upkeep ideal'],
     vehicleCategory: 'car'
   },
   {
-    name: 'Standard Package – £40',
+    name: 'Standard Package – £32',
     displayName: 'Standard Package',
     icon: Sparkles,
     description: 'A complete inside-and-out clean. Full interior and exterior cleaning with dashboard wipe, vacuum, and windows.',
     duration: '3 hrs',
-    price: 40,
+    price: 32,
     features: ['Full interior & exterior', 'Dashboard wipe', 'Vacuum & windows', 'No deep seat cleaning'],
     vehicleCategory: 'car'
   },
   {
-    name: 'Premium Package – £55',
+    name: 'Premium Package – £45',
     displayName: 'Premium Package',
     icon: Star,
     description: 'Enhanced detailing with paint protection. Everything in Standard plus protective sealant.',
     duration: '3 hrs',
-    price: 55,
+    price: 45,
     features: ['Everything in Standard', 'Paint protection sealant', 'Preserves paint finish'],
     vehicleCategory: 'car'
   },
   {
-    name: 'Ultimate Package – £120',
+    name: 'Ultimate Package – £80',
     displayName: 'Ultimate Package',
     icon: Gem,
     description: 'Top-tier intensive detailing. Deep cleaning of all surfaces with stain remover treatment.',
     duration: '4 - 4.5 hrs',
-    price: 120,
+    price: 80,
     features: ['Everything in Premium', 'Deep surface cleaning', 'Alloy wheels & windows', 'Stain remover treatment'],
     vehicleCategory: 'car'
   },
   {
-    name: 'Maintenance Plan – £45/month',
+    name: 'Maintenance Plan – £40/month',
     displayName: 'Maintenance Plan',
     icon: Calendar,
     description: 'Monthly subscription to keep your car consistently clean and protected all year round.',
     duration: 'Monthly',
-    price: 45,
+    price: 40,
     features: ['Everything in Premium', 'Monthly service', 'Alloy wheel care', 'Requires 1 Premium first'],
     isSubscription: true,
     vehicleCategory: 'car'
@@ -89,7 +89,6 @@ const vanServices = [
     displayName: 'Small Van Package',
     icon: Truck,
     description: 'Perfect for compact vans and small commercial vehicles',
-    duration: '2 - 2.5 hrs',
     price: 50,
     features: [
       'Full exterior wash and hand dry',
@@ -97,7 +96,7 @@ const vanServices = [
       'Dashboard and console cleaning',
       'Window cleaning inside and out',
       'Door jambs and hinges cleaned',
-      'Tire dressing and wheel cleaning'
+      'Tyre dressing and wheel cleaning'
     ],
     vehicleCategory: 'van'
   },
@@ -106,15 +105,14 @@ const vanServices = [
     displayName: 'Medium Van Package',
     icon: Truck,
     description: 'Ideal for standard transit vans and medium commercial vehicles',
-    duration: '3 - 3.5 hrs',
     price: 65,
     features: [
-      'Everything in Small Van package',
-      'Cargo area deep clean and sanitization',
-      'Floor mat deep cleaning',
-      'Upholstery spot treatment',
-      'Air vent and crevice detailing',
-      'Exterior trim restoration'
+      'Full exterior wash and hand dry',
+      'Interior vacuum and deep clean',
+      'Dashboard and console cleaning',
+      'Window cleaning inside and out',
+      'Door jambs and hinges cleaned',
+      'Tyre dressing and wheel cleaning'
     ],
     vehicleCategory: 'van'
   },
@@ -123,16 +121,14 @@ const vanServices = [
     displayName: 'Large Van Package',
     icon: Truck,
     description: 'Comprehensive service for large vans and high-roof vehicles',
-    duration: '4 - 4.5 hrs',
     price: 80,
     features: [
-      'Everything in Medium Van package',
-      'Extended roof and high-reach cleaning',
-      'Heavy-duty cargo area restoration',
-      'Industrial-grade stain removal',
-      'Protective wax application (exterior)',
-      'Interior fabric protection treatment',
-      'Engine bay wipe-down'
+      'Full exterior wash and hand dry',
+      'Interior vacuum and deep clean',
+      'Dashboard and console cleaning',
+      'Window cleaning inside and out',
+      'Door jambs and hinges cleaned',
+      'Tyre dressing and wheel cleaning'
     ],
     vehicleCategory: 'van'
   }
