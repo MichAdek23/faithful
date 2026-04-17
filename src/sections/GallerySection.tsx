@@ -33,7 +33,6 @@ const galleryImages = [
     url: "/BeforeAfter1.PNG",
     alt: "Car detailing service 6",
   },
-  
 ];
 
 export const GallerySection = () => {
