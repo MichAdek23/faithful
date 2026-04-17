@@ -49,6 +49,46 @@ const galleryImages: GalleryImage[] = [
     id: 9,
     src: "/displaytires2.jpeg",
     category: "Tyres"
+  },
+  {
+    id: 10,
+    src: "/whiteTire.jpeg",
+    category: "Tyres"
+  },
+  {
+    id: 11,
+    src: "/whiteInterior.jpeg",
+    category: "Interior"
+  },
+  {
+    id: 12,
+    src: "/WhiteExterior.jpeg",
+    category: "Exterior"
+  },
+  {
+    id: 13,
+    src: "/WhiteFootmat.jpeg",
+    category: "Footmats"
+  },
+  {
+    id: 14,
+    src: "/WhiteInterior2.jpeg",
+    category: "Interior"
+  },
+  {
+    id: 15,
+    src: "/SkyblueExterior.jpeg",
+    category: "Exterior"
+  },
+  {
+    id: 16,
+    src: "/SkyblueInterior.jpeg",
+    category: "Interior"
+  },
+  {
+    id: 17,
+    src: "/SkyblueTire.jpeg",
+    category: "Tyres"
   }
 ];
 
