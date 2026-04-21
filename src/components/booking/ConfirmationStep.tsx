@@ -1,4 +1,4 @@
-import { Calendar, Clock, Sparkles, Car, User, Phone, Tag, Percent, Mail, MapPin, Chrome as Home, Truck } from 'lucide-react';
+import { Calendar, Clock, Sparkles, Car, User, Phone, Tag, Percent, Mail, MapPin, Chrome as Home, Truck, Wrench } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useNavigate } from 'react-router-dom';
 import type { BookingData, DiscountInfo } from '../../pages/BookingPage';
@@ -23,9 +23,20 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
     });
   };
 
-  // Helper to get vehicle icon based on type
-  const getVehicleIcon = (vehicleType: string) => {
-    return vehicleType === 'Van' ? Truck : Car;
+  // Helper to get vehicle icon based on type and service
+  const getVehicleIcon = (vehicleType: string, serviceType?: string) => {
+    if (serviceType?.includes('Engine')) return Wrench;
+    if (vehicleType === 'Van') return Truck;
+    if (vehicleType === 'Car') return Car;
+    return Car;
+  };
+
+  // Helper to get service category label
+  const getServiceCategoryLabel = (serviceType: string, vehicleType: string) => {
+    if (serviceType?.includes('Engine')) return 'Engine Service';
+    if (vehicleType === 'Van') return 'Van Service';
+    if (vehicleType === 'Car') return 'Car Service';
+    return 'Service';
   };
 
   // Check if there's a same-day fee
@@ -41,6 +52,7 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
   
   const isMultiCar = cars.length > 1;
   const hasVans = cars.some(car => car.vehicleType === 'Van');
+  const hasEngineService = cars.some(car => car.serviceType?.includes('Engine'));
 
   return (
     <div className="space-y-8">
@@ -102,7 +114,7 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
 
         {/* Services Selected */}
         <div className="border-t pt-4">
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
             <Sparkles className="w-5 h-5 text-[#1E90FF]" />
             <h3 className="font-semibold text-gray-900">
               {isMultiCar ? `Services (${cars.length} vehicles)` : 'Service Selected'}
@@ -112,24 +124,41 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
                 Includes Van Service
               </span>
             )}
+            {hasEngineService && (
+              <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                Includes Engine Service
+              </span>
+            )}
           </div>
           <div className="space-y-3">
             {cars.map((car, index) => {
               // Price per car includes any condition fee
               const perCarTotal = car.servicePrice + (car.conditionFee ?? 0);
-              const VehicleIcon = getVehicleIcon(car.vehicleType);
+              const VehicleIcon = getVehicleIcon(car.vehicleType, car.serviceType);
+              const serviceCategory = getServiceCategoryLabel(car.serviceType || '', car.vehicleType);
+              const isEngineService = car.serviceType?.includes('Engine');
+              const isVanService = car.vehicleType === 'Van' && !isEngineService;
               
               return (
-                <div key={car.id} className="bg-gray-50 rounded-lg p-4">
+                <div key={car.id} className={`rounded-lg p-4 ${
+                  isEngineService ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'
+                }`}>
                   <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-2">
-                      <VehicleIcon className="w-4 h-4 text-gray-500" />
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <VehicleIcon className={`w-4 h-4 ${
+                        isEngineService ? 'text-orange-600' : 'text-gray-500'
+                      }`} />
                       <span className="font-medium text-gray-900">
-                        {car.vehicleType} {index + 1}
+                        {serviceCategory} {index + 1}
                       </span>
-                      {car.vehicleType === 'Van' && (
-                        <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded">
+                      {isVanService && (
+                        <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
                           Commercial
+                        </span>
+                      )}
+                      {isEngineService && (
+                        <span className="text-[10px] bg-orange-200 text-orange-800 px-1.5 py-0.5 rounded">
+                          Engine Bay
                         </span>
                       )}
                     </div>
@@ -148,7 +177,7 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
                   {car.vehicleDetails && car.vehicleDetails.trim().length > 0 && (
                     <p className="text-xs text-gray-500 ml-6 mt-1">Details: {car.vehicleDetails}</p>
                   )}
-                  {car.vehicleCondition && car.vehicleCondition !== 'mild' && (
+                  {!isEngineService && car.vehicleCondition && car.vehicleCondition !== 'mild' && (
                     <p className="text-xs text-gray-500 ml-6">
                       Condition: {car.vehicleCondition.replace('_', ' ')} 
                       <span className="text-emerald-600 ml-1">
@@ -258,7 +287,7 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
         </div>
       </div>
 
-      {/* Van-specific note if applicable */}
+      {/* Service-specific notes */}
       {hasVans && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
           <div className="flex items-start gap-3">
@@ -268,6 +297,22 @@ export function ConfirmationStep({ bookingData, bookingId, discountInfo }: Confi
               <p className="text-sm text-blue-700 mt-1">
                 Please ensure the van is accessible and there is adequate space for our equipment. 
                 For commercial vehicles, please remove any valuable items or sensitive materials from the cargo area before our arrival.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {hasEngineService && (
+        <div className="bg-orange-50 border border-orange-200 rounded-xl p-5">
+          <div className="flex items-start gap-3">
+            <Wrench className="w-5 h-5 text-orange-600 mt-0.5" />
+            <div>
+              <h4 className="font-semibold text-orange-900">Engine Detailing Information</h4>
+              <p className="text-sm text-orange-700 mt-1">
+                For engine detailing, please ensure the engine has cooled down before our arrival. 
+                We recommend not driving the vehicle for at least 30 minutes prior to the service time.
+                The engine bay will be thoroughly cleaned, degreased, and protected.
               </p>
             </div>
           </div>
