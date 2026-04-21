@@ -48,7 +48,12 @@ const galleryImages: GalleryImage[] = [
   {
     id: 11,
     src: "/gridCar2.jpeg"
+  },
+  {
+    id: 12,
+    src: "/engineMix.jpeg"
   }
+
 ];
 
 export const PhotoGallerySection = () => {

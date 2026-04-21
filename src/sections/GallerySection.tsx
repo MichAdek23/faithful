@@ -30,7 +30,7 @@ const galleryImages = [
   },
   {
     id: 6,
-    url: "/BeforeAfter1.PNG",
+    url: "/SingleEngineHD.jpeg",
     alt: "Car detailing service 6",
   },
 ];
