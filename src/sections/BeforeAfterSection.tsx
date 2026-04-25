@@ -15,7 +15,7 @@ const galleryImages: GalleryImage[] = [
   },
   {
     id: 2,
-    src: "/BeforeAfter2.PNG"
+    src: "/blackCar2.jpg"
   },
   {
     id: 4,
@@ -52,7 +52,16 @@ const galleryImages: GalleryImage[] = [
   {
     id: 12,
     src: "/engineMix.jpeg"
-  }
+  },
+  {
+    id: 13,
+    src: "/blackCar1.jpg"
+  },
+  {
+    id: 14,
+    src: "/BeforeAfter2.PNG"
+  },
+
 
 ];
 
