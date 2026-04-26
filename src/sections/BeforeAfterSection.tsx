@@ -10,10 +10,6 @@ interface GalleryImage {
 // Gallery images
 const galleryImages: GalleryImage[] = [
   {
-    id: 1,
-    src: "/BeforeAfter1.PNG"
-  },
-  {
     id: 2,
     src: "/blackCar2.jpg"
   },

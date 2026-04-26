@@ -25,7 +25,7 @@ const galleryImages = [
   },
   {
     id: 5,
-    url: "/BeforeAfter2.PNG",
+    url: "/neatCar.jpeg",
     alt: "Car detailing service 5",
   },
   {
@@ -37,6 +37,11 @@ const galleryImages = [
     id: 7,
     url: "/dashboard1.jpg",
     alt: "Car detailing service 7",
+  },
+  {
+    id: 8,
+    url: "/neatCar2.jpeg",
+    alt: "Car detailing service 8",
   },
 ];
 
