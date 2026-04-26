@@ -18,6 +18,10 @@ const galleryImages: GalleryImage[] = [
     src: "/blackCar2.jpg"
   },
   {
+    id: 3,
+    src: "/blackCar1.jpg"
+  },  
+  {
     id: 4,
     src: "/BeforeAfter4.PNG"
   },
@@ -55,10 +59,6 @@ const galleryImages: GalleryImage[] = [
   },
   {
     id: 13,
-    src: "/blackCar1.jpg"
-  },
-  {
-    id: 14,
     src: "/BeforeAfter2.PNG"
   },
 
