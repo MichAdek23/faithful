@@ -52,13 +52,13 @@ function HomePage() {
     <div className="min-h-screen">
       <HeroSection />
       <FeaturesSection />
-      <GallerySection/>
+      <PhotoGallerySection />
       <AboutSection />
       <ServicesSection />
       <PricingSection />
       <VanPricingSection />
       <HowItWorksSection />
-      <PhotoGallerySection /> {/* Updated component usage */}
+      <GallerySection/>
       <WhyChooseUsSection />
       <StatisticsSection />
       <ReviewsSection />

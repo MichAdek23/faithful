@@ -43,6 +43,16 @@ const galleryImages = [
     url: "/neatCar2.jpeg",
     alt: "Car detailing service 8",
   },
+  {
+    id: 9,
+    url: "/Landscaped.jpeg",
+    alt: "Car detailing service 9",
+  },
+  {
+    id: 10,
+    url: "/SoapieCar.jpeg",
+    alt: "Car detailing service 10",
+  },
 ];
 
 export const GallerySection = () => {
@@ -51,8 +61,8 @@ export const GallerySection = () => {
   const isInView = useInView(sectionRef, { once: true, amount: 0.2 });
   const controls = useAnimation();
   const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
+  const [isAutoScrolling, setIsAutoScrolling] = useState(true);
+  const autoScrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (isInView) {
@@ -60,12 +70,51 @@ export const GallerySection = () => {
     }
   }, [isInView, controls]);
 
+  // Auto-scroll animation
+  useEffect(() => {
+    const startAutoScroll = () => {
+      if (!scrollContainerRef.current) return;
+      
+      autoScrollIntervalRef.current = setInterval(() => {
+        if (scrollContainerRef.current && !isDragging && isAutoScrolling) {
+          scrollContainerRef.current.scrollLeft += 1;
+          
+          // Reset scroll position when reaching the end for seamless loop
+          if (
+            scrollContainerRef.current.scrollLeft >= 
+            scrollContainerRef.current.scrollWidth - scrollContainerRef.current.clientWidth
+          ) {
+            scrollContainerRef.current.scrollLeft = 0;
+          }
+        }
+      }, 30); // Adjust speed by changing interval (lower = faster)
+    };
+
+    if (isInView) {
+      startAutoScroll();
+    }
+
+    return () => {
+      if (autoScrollIntervalRef.current) {
+        clearInterval(autoScrollIntervalRef.current);
+      }
+    };
+  }, [isInView, isDragging, isAutoScrolling]);
+
+  // Pause auto-scroll when user interacts
+  const handleUserInteraction = () => {
+    setIsAutoScrolling(false);
+    // Resume auto-scroll after 3 seconds of inactivity
+    setTimeout(() => {
+      setIsAutoScrolling(true);
+    }, 3000);
+  };
+
   // Mouse drag functionality for desktop
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!scrollContainerRef.current) return;
     setIsDragging(true);
-    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
-    setScrollLeft(scrollContainerRef.current.scrollLeft);
+    handleUserInteraction();
     scrollContainerRef.current.style.cursor = "grabbing";
   };
 
@@ -84,24 +133,15 @@ export const GallerySection = () => {
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging || !scrollContainerRef.current) return;
     e.preventDefault();
-    const x = e.pageX - scrollContainerRef.current.offsetLeft;
-    const walk = (x - startX) * 2;
-    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+    const walk = e.movementX;
+    scrollContainerRef.current.scrollLeft -= walk;
   };
 
   // Touch drag functionality for mobile
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!scrollContainerRef.current) return;
     setIsDragging(true);
-    setStartX(e.touches[0].pageX - scrollContainerRef.current.offsetLeft);
-    setScrollLeft(scrollContainerRef.current.scrollLeft);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || !scrollContainerRef.current) return;
-    const x = e.touches[0].pageX - scrollContainerRef.current.offsetLeft;
-    const walk = (x - startX) * 2;
-    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+    handleUserInteraction();
   };
 
   const handleTouchEnd = () => {
@@ -125,8 +165,12 @@ export const GallerySection = () => {
         </motion.div>
       </div>
 
-      {/* Full-width image strip - with drag scrolling */}
+      {/* Full-width image strip - with auto-scrolling */}
       <div className="w-full relative">
+        {/* Gradient overlays for smooth edges */}
+        <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-20 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
+        <div className="absolute right-0 top-0 bottom-0 w-12 sm:w-20 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
+        
         <div 
           ref={scrollContainerRef}
           className="overflow-x-auto overflow-y-hidden scrollbar-hide"
@@ -141,7 +185,6 @@ export const GallerySection = () => {
           onMouseUp={handleMouseUp}
           onMouseMove={handleMouseMove}
           onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
           <style>
@@ -152,11 +195,12 @@ export const GallerySection = () => {
             `}
           </style>
           <div className="flex gap-3 sm:gap-4 px-4 sm:px-6">
-            {galleryImages.map((image, index) => (
+            {/* Duplicate images for seamless infinite scroll */}
+            {[...galleryImages, ...galleryImages].map((image, index) => (
               <GalleryImage
-                key={image.id}
+                key={`${image.id}-${index}`}
                 image={image}
-                index={index}
+                index={index % galleryImages.length}
                 controls={controls}
               />
             ))}
@@ -167,7 +211,7 @@ export const GallerySection = () => {
       {/* Scroll hint for all devices */}
       <div className="text-center mt-6 text-gray-400 text-xs flex items-center justify-center gap-2">
         <span>←</span>
-        <span>Drag or swipe to see more</span>
+        <span>Auto-scrolling • Drag or swipe to explore</span>
         <span>→</span>
       </div>
     </section>
