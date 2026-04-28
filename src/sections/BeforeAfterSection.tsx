@@ -10,51 +10,91 @@ interface GalleryImage {
 // Gallery images
 const galleryImages: GalleryImage[] = [
   {
+    id: 1,
+    src: "/red1.jpeg"
+  },
+  {
     id: 2,
-    src: "/blackCar2.jpg"
+    src: "/red2.jpeg"
   },
   {
     id: 3,
-    src: "/blackCar1.jpg"
-  },  
+    src: "/gray1.jpeg"
+  },
   {
     id: 4,
-    src: "/BeforeAfter4.PNG"
+    src: "/gray2.jpeg"
   },
   {
     id: 5,
-    src: "/BeforeAfter5.jpeg"
+    src: "/gray3.jpeg"
   },
   {
     id: 6,
-    src: "/displaytires.jpeg"
+    src: "/gray4.jpeg"
   },
   {
     id: 7,
-    src: "/ExteriorDisplay.jpeg"
+    src: "/gray5.jpeg"
   },
   {
     id: 8,
-    src: "/InteriorSection.jpeg"
+    src: "/classic1.jpeg"
   },
   {
     id: 9,
-    src: "/displaytires2.jpeg"
+    src: "/classic2.jpeg"
   },
   {
     id: 10,
-    src: "/gridCar1.jpeg"
+    src: "/classic3.jpeg"
   },
   {
     id: 11,
-    src: "/gridCar2.jpeg"
+    src: "/blackCar2.jpg"
   },
   {
     id: 12,
+    src: "/blackCar1.jpg"
+  },  
+  {
+    id: 13,
+    src: "/BeforeAfter4.PNG"
+  },
+  {
+    id: 14,
+    src: "/BeforeAfter5.jpeg"
+  },
+  {
+    id:  15,
+    src: "/displaytires.jpeg"
+  },
+  {
+    id: 16,
+    src: "/ExteriorDisplay.jpeg"
+  },
+  {
+    id: 17,
+    src: "/InteriorSection.jpeg"
+  },
+  {
+    id: 18,
+    src: "/displaytires2.jpeg"
+  },
+  {
+    id: 19,
+    src: "/gridCar1.jpeg"
+  },
+  {
+    id: 20,
+    src: "/gridCar2.jpeg"
+  },
+  {
+    id: 21,
     src: "/engineMix.jpeg"
   },
   {
-    id: 13,
+    id: 22,
     src: "/BeforeAfter2.PNG"
   },
 

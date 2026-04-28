@@ -53,6 +53,56 @@ const galleryImages = [
     url: "/SoapieCar.jpeg",
     alt: "Car detailing service 10",
   },
+  {
+    id: 11,
+    url: "/RedSlide1.jpeg",
+    alt: "Car detailing service 11",
+  },
+  {
+    id: 12,
+    url: "/RedSlide2.jpeg",
+    alt: "Car detailing service 12",
+  },
+  {
+    id: 13,
+    url: "/graySlide1.jpeg",
+    alt: "Car detailing service 13",
+  },
+  {
+    id: 14,
+    url: "/graySlide2.jpeg",
+    alt: "Car detailing service 14",
+  },
+  {
+    id: 15,
+    url: "/graySlide3.jpeg",
+    alt: "Car detailing service 15",
+  },
+  {
+    id: 16,
+    url: "/graySlide4.jpeg",
+    alt: "Car detailing service 16",
+  },
+  {
+    id: 17,
+    url: "/graySlide5.jpeg",
+    alt: "Car detailing service 17",
+  },
+  {
+    id: 18,
+    url: "/classicSide1.jpeg",
+    alt: "Car detailing service 18",
+  },
+  {
+    id: 19,
+    url: "/classicSide2.jpeg",
+    alt: "Car detailing service 19",
+  },
+  {
+    id: 20,
+    url: "/classicSide3.jpeg",
+    alt: "Car detailing service 20",
+  },
 ];
 
 export const GallerySection = () => {
@@ -273,4 +323,4 @@ const GalleryImage = ({ image, index, controls }: GalleryImageProps) => {
       </div>
     </motion.div>
   );
-};
+}; 
